@@ -24,7 +24,8 @@ def test_employee_model(app):
             department='営業部',
             position='マネージャー',
             email='sato@example.com',
-            hire_date=date(2020, 4, 1)
+            hire_date=date(2020, 4, 1),
+            is_active=True
         )
         
         assert employee.employee_name == '佐藤花子'
@@ -39,7 +40,8 @@ def test_project_model(app):
             description='新規開発プロジェクト',
             start_date=date(2024, 1, 1),
             end_date=date(2024, 12, 31),
-            budget=Decimal('10000000.00')
+            budget=Decimal('10000000.00'),
+            is_active=True
         )
         
         assert project.project_name == '新規プロジェクト'
