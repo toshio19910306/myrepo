@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import BatchHistory, WorkRecord, db
 from services.batch_service import BatchService
 from functools import wraps
+from datetime import datetime
 import structlog
 
 api_bp = Blueprint('api', __name__)
