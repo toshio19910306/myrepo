@@ -141,10 +141,10 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-8 flex gap-4">
-          <Button className="bg-primary hover:bg-primary/90">
+          <Button className="bg-primary hover:bg-primary/90" onClick={() => window.location.href = '/requests'}>
             新規見積依頼作成
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => window.location.href = '/approvals'}>
             承認履歴詳細
           </Button>
           <Button variant="outline">
