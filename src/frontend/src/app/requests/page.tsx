@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 
 export default function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-
-  const mockRequests = [
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [requests, setRequests] = useState([
     {
       id: "REQ-001",
       title: "新システム開発見積依頼",
@@ -42,9 +42,17 @@ export default function RequestsPage() {
       estimatedAmount: "1,500,000円",
       attachments: ["監査要項.pdf", "チェックリスト.xlsx"]
     }
-  ];
+  ]);
+  const [newRequest, setNewRequest] = useState({
+    title: "",
+    specId: "",
+    vendor: "",
+    dueDate: "",
+    estimatedAmount: "",
+    description: ""
+  });
 
-  const filteredRequests = mockRequests.filter(request =>
+  const filteredRequests = requests.filter(request =>
     request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     request.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     request.vendor.toLowerCase().includes(searchTerm.toLowerCase())
@@ -57,6 +65,71 @@ export default function RequestsPage() {
       case "進行中": return "text-blue-600 bg-blue-50";
       default: return "text-gray-600 bg-gray-50";
     }
+  };
+
+  const mockSpecs = [
+    { id: "SPEC-001", title: "新システム開発仕様書" },
+    { id: "SPEC-002", title: "インフラ構築仕様書" },
+    { id: "SPEC-003", title: "セキュリティ監査仕様書" }
+  ];
+
+  const mockVendors = [
+    "株式会社テックソリューション",
+    "クラウドインフラ株式会社", 
+    "セキュリティ監査法人",
+    "システム開発株式会社",
+    "ITコンサルティング株式会社"
+  ];
+
+  const handleCreateRequest = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleSaveRequest = () => {
+    if (!newRequest.title.trim() || !newRequest.specId || !newRequest.vendor || !newRequest.dueDate) {
+      alert("必須項目をすべて入力してください。");
+      return;
+    }
+
+    const newRequestId = `REQ-${String(requests.length + 1).padStart(3, '0')}`;
+    const today = new Date().toISOString().split('T')[0];
+    
+    const newEstimateRequest = {
+      id: newRequestId,
+      title: newRequest.title,
+      specId: newRequest.specId,
+      status: "承認待ち",
+      createdDate: today,
+      dueDate: newRequest.dueDate,
+      vendor: newRequest.vendor,
+      estimatedAmount: newRequest.estimatedAmount || "未設定",
+      attachments: []
+    };
+
+    setRequests(prev => [...prev, newEstimateRequest]);
+    setShowCreateModal(false);
+    setNewRequest({
+      title: "",
+      specId: "",
+      vendor: "",
+      dueDate: "",
+      estimatedAmount: "",
+      description: ""
+    });
+    
+    console.log("新規見積依頼作成:", newEstimateRequest);
+  };
+
+  const handleCancelCreate = () => {
+    setShowCreateModal(false);
+    setNewRequest({
+      title: "",
+      specId: "",
+      vendor: "",
+      dueDate: "",
+      estimatedAmount: "",
+      description: ""
+    });
   };
 
   return (
@@ -80,7 +153,10 @@ export default function RequestsPage() {
               className="w-full"
             />
           </div>
-          <Button className="ml-4 bg-primary hover:bg-primary/90">
+          <Button 
+            className="ml-4 bg-primary hover:bg-primary/90"
+            onClick={handleCreateRequest}
+          >
             新規見積依頼作成
           </Button>
         </div>
@@ -157,6 +233,118 @@ export default function RequestsPage() {
         {filteredRequests.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">検索条件に一致する見積依頼が見つかりません。</p>
+          </div>
+        )}
+
+        {/* 新規見積依頼作成モーダル */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-bold text-primary mb-6">新規見積依頼作成</h2>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">依頼タイトル</label>
+                  <Input
+                    value={newRequest.title}
+                    onChange={(e) => setNewRequest(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="見積依頼のタイトルを入力してください"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">関連仕様書</label>
+                  <select
+                    value={newRequest.specId}
+                    onChange={(e) => setNewRequest(prev => ({ ...prev, specId: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">仕様書を選択してください</option>
+                    {mockSpecs.map(spec => (
+                      <option key={spec.id} value={spec.id}>
+                        {spec.id} - {spec.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">ベンダー</label>
+                  <select
+                    value={newRequest.vendor}
+                    onChange={(e) => setNewRequest(prev => ({ ...prev, vendor: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">ベンダーを選択してください</option>
+                    {mockVendors.map(vendor => (
+                      <option key={vendor} value={vendor}>
+                        {vendor}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">回答期限</label>
+                    <Input
+                      type="date"
+                      value={newRequest.dueDate}
+                      onChange={(e) => setNewRequest(prev => ({ ...prev, dueDate: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">予算上限</label>
+                    <Input
+                      value={newRequest.estimatedAmount}
+                      onChange={(e) => setNewRequest(prev => ({ ...prev, estimatedAmount: e.target.value }))}
+                      placeholder="例: 5,000,000円"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">詳細説明</label>
+                  <textarea
+                    value={newRequest.description}
+                    onChange={(e) => setNewRequest(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="見積依頼の詳細内容を入力してください"
+                    className="w-full p-2 border border-gray-300 rounded-md h-24 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">添付ファイル</label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-500">
+                      ファイルをドラッグ＆ドロップするか、クリックして選択してください
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      PDF, Word, Excel, PowerPoint (最大10MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelCreate}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  onClick={handleSaveRequest}
+                  className="bg-primary hover:bg-primary/90"
+                  disabled={!newRequest.title.trim() || !newRequest.specId || !newRequest.vendor}
+                >
+                  作成
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
