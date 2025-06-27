@@ -37,11 +37,49 @@ export default function SpecificationsPage() {
       deliverables: ["診断報告書", "改善提案書"]
     }
   ]);
-  const [newSpec, setNewSpec] = useState({
+  const [newSpec, setNewSpec] = useState<{
+    title: string;
+    workItems: string[];
+    deliverables: string[];
+  }>({
     title: "",
-    workItems: [""],
-    deliverables: [""]
+    workItems: [],
+    deliverables: []
   });
+
+  const workItemOptions = [
+    "基本構想立案",
+    "要件定義", 
+    "AP外部設計",
+    "ＡＰ内部設計",
+    "AP製造",
+    "プログラムテスト（単体テスト)",
+    "AP結合テスト",
+    "システムテスト",
+    "システム受入支援・移行",
+    "運用保守"
+  ];
+
+  const deliverableOptions = [
+    "基本計画",
+    "業務要件定義書",
+    "リスクリスト(プロジェクト管理)",
+    "課題管理表(プロジェクト管理)",
+    "システム要件定義書",
+    "システムアーキテクチャー概要設計書",
+    "システムテスト関連書（テスト計画書部分）",
+    "AP外部設計書",
+    "AP内部設計書",
+    "AP製造関連書",
+    "AP結合テスト関連書",
+    "システム基盤設計書",
+    "システム基盤構築関連書",
+    "システムテスト関連書",
+    "移行準備関連書",
+    "受入移行関連書",
+    "サービス提供準備関連書",
+    "打合せ議事録"
+  ];
 
   const filteredSpecs = specifications.filter(spec =>
     spec.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,11 +100,8 @@ export default function SpecificationsPage() {
   };
 
   const handleSaveSpec = () => {
-    const filteredWorkItems = newSpec.workItems.filter((item: string) => item.trim() !== "");
-    const filteredDeliverables = newSpec.deliverables.filter((item: string) => item.trim() !== "");
-    
-    if (filteredWorkItems.length === 0 || filteredDeliverables.length === 0) {
-      alert("作業項目と成果物を少なくとも1つずつ入力してください。");
+    if (newSpec.workItems.length === 0 || newSpec.deliverables.length === 0) {
+      alert("作業項目と成果物を少なくとも1つずつ選択してください。");
       return;
     }
 
@@ -79,66 +114,52 @@ export default function SpecificationsPage() {
       status: "作成中",
       createdDate: today,
       approver: "-",
-      workItems: filteredWorkItems,
-      deliverables: filteredDeliverables
+      workItems: newSpec.workItems,
+      deliverables: newSpec.deliverables
     };
 
     setSpecifications(prev => [...prev, newSpecification]);
     setShowCreateModal(false);
-    setNewSpec({ title: "", workItems: [""], deliverables: [""] });
+    setNewSpec({ title: "", workItems: [], deliverables: [] });
     
     console.log("新規仕様書作成:", newSpecification);
   };
 
   const handleCancelCreate = () => {
     setShowCreateModal(false);
-    setNewSpec({ title: "", workItems: [""], deliverables: [""] });
+    setNewSpec({ title: "", workItems: [], deliverables: [] });
   };
 
-  const addWorkItem = () => {
-    setNewSpec((prev: any) => ({
-      ...prev,
-      workItems: [...prev.workItems, ""]
-    }));
-  };
-
-  const addDeliverable = () => {
-    setNewSpec((prev: any) => ({
-      ...prev,
-      deliverables: [...prev.deliverables, ""]
-    }));
-  };
-
-  const updateWorkItem = (index: number, value: string) => {
-    setNewSpec((prev: any) => ({
-      ...prev,
-      workItems: prev.workItems.map((item: string, i: number) => i === index ? value : item)
-    }));
-  };
-
-  const updateDeliverable = (index: number, value: string) => {
-    setNewSpec((prev: any) => ({
-      ...prev,
-      deliverables: prev.deliverables.map((item: string, i: number) => i === index ? value : item)
-    }));
-  };
-
-  const removeWorkItem = (index: number) => {
-    if (newSpec.workItems.length > 1) {
-      setNewSpec((prev: any) => ({
+  const addWorkItem = (selectedItem: string) => {
+    if (!newSpec.workItems.includes(selectedItem)) {
+      setNewSpec(prev => ({
         ...prev,
-        workItems: prev.workItems.filter((_: string, i: number) => i !== index)
+        workItems: [...prev.workItems, selectedItem]
       }));
     }
   };
 
-  const removeDeliverable = (index: number) => {
-    if (newSpec.deliverables.length > 1) {
-      setNewSpec((prev: any) => ({
+  const addDeliverable = (selectedItem: string) => {
+    if (!newSpec.deliverables.includes(selectedItem)) {
+      setNewSpec(prev => ({
         ...prev,
-        deliverables: prev.deliverables.filter((_: string, i: number) => i !== index)
+        deliverables: [...prev.deliverables, selectedItem]
       }));
     }
+  };
+
+  const removeWorkItem = (itemToRemove: string) => {
+    setNewSpec(prev => ({
+      ...prev,
+      workItems: prev.workItems.filter(item => item !== itemToRemove)
+    }));
+  };
+
+  const removeDeliverable = (itemToRemove: string) => {
+    setNewSpec(prev => ({
+      ...prev,
+      deliverables: prev.deliverables.filter(item => item !== itemToRemove)
+    }));
   };
 
   return (
@@ -259,62 +280,78 @@ export default function SpecificationsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">作業項目</label>
-                  {newSpec.workItems.map((item, index) => (
-                    <div key={index} className="flex gap-2 mb-2">
-                      <Input
-                        value={item}
-                        onChange={(e) => updateWorkItem(index, e.target.value)}
-                        placeholder="作業項目を入力してください"
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeWorkItem(index)}
-                        disabled={newSpec.workItems.length === 1}
-                      >
-                        削除
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addWorkItem}
-                    className="mt-2"
-                  >
-                    + 作業項目を追加
-                  </Button>
+                  <div className="mb-4">
+                    <select
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          addWorkItem(e.target.value);
+                          e.target.value = "";
+                        }
+                      }}
+                    >
+                      <option value="">作業項目を選択してください</option>
+                      {workItemOptions
+                        .filter(option => !newSpec.workItems.includes(option))
+                        .map((option, index) => (
+                          <option key={index} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    {newSpec.workItems.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span className="text-sm">{item}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeWorkItem(item)}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">成果物</label>
-                  {newSpec.deliverables.map((item, index) => (
-                    <div key={index} className="flex gap-2 mb-2">
-                      <Input
-                        value={item}
-                        onChange={(e) => updateDeliverable(index, e.target.value)}
-                        placeholder="成果物を入力してください"
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeDeliverable(index)}
-                        disabled={newSpec.deliverables.length === 1}
-                      >
-                        削除
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addDeliverable}
-                    className="mt-2"
-                  >
-                    + 成果物を追加
-                  </Button>
+                  <div className="mb-4">
+                    <select
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          addDeliverable(e.target.value);
+                          e.target.value = "";
+                        }
+                      }}
+                    >
+                      <option value="">成果物を選択してください</option>
+                      {deliverableOptions
+                        .filter(option => !newSpec.deliverables.includes(option))
+                        .map((option, index) => (
+                          <option key={index} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    {newSpec.deliverables.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span className="text-sm">{item}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeDeliverable(item)}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
