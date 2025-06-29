@@ -31,7 +31,7 @@ export default function FilesPage() {
 
   const fetchFiles = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/files');
+      const response = await fetch('https://database-fix-app-tunnel-arvgx9xw.devinapps.com/api/files');
       if (!response.ok) {
         throw new Error('Failed to fetch files');
       }
@@ -59,7 +59,7 @@ export default function FilesPage() {
         formData.append('target_type', 'SPECIFICATION');
         formData.append('target_id', '1');
         
-        const response = await fetch('http://localhost:8080/api/files/upload', {
+        const response = await fetch('https://database-fix-app-tunnel-arvgx9xw.devinapps.com/api/files/upload', {
           method: 'POST',
           body: formData,
         });
@@ -107,7 +107,7 @@ export default function FilesPage() {
 
   const handleDownload = async (file: FileItem) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/files/download/${file.file_id}`);
+      const response = await fetch(`https://database-fix-app-tunnel-arvgx9xw.devinapps.com/api/files/download/${file.file_id}`);
       if (!response.ok) {
         throw new Error('Failed to download file');
       }
@@ -128,7 +128,7 @@ export default function FilesPage() {
 
   const handleDelete = async (fileId: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/files/${fileId}`, {
+      const response = await fetch(`https://database-fix-app-tunnel-arvgx9xw.devinapps.com/api/files/${fileId}`, {
         method: 'DELETE',
       });
       
