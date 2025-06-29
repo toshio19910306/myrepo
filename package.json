@@ -1,0 +1,15 @@
+{
+  "name": "estimate-request-app",
+  "version": "1.0.0",
+  "description": "Estimate Request Management Application",
+  "scripts": {
+    "build": "cd src/frontend && npm install && npm run build && cd ../backend && cargo build --release",
+    "start": "cd src/backend && cargo run",
+    "dev:frontend": "cd src/frontend && npm run dev",
+    "dev:backend": "cd src/backend && cargo run",
+    "test": "cd src/backend && cargo test && cd ../frontend && npm test"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

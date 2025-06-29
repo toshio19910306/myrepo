@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>見積回答一覧 - 見積管理システム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav a:hover, .nav a.active {
+            background-color: #34495e;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+        }
+        
+        .user-info {
+            background-color: #e8f4fd;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .search-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .search-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .search-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .results-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .results-count {
+            color: #666;
+        }
+        
+        .filter-note {
+            color: #e67e22;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-submitted {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .status-estimating {
+            background-color: #e67e22;
+            color: white;
+        }
+        
+        .status-completed {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-small {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        .estimate-info {
+            background-color: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .estimate-price {
+            font-weight: 600;
+            color: #27ae60;
+        }
+        
+        .pagination {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .pagination button:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .pagination button.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>見積管理システム</h1>
+        <nav class="nav">
+            <a href="#">見積依頼一覧</a>
+            <a href="#" class="active">見積回答一覧</a>
+            <a href="#">ユーザー管理</a>
+            <a href="#">設定</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">見積回答一覧</h2>
+            <div class="user-info">
+                <strong>ベンダー:</strong> 株式会社ABC | <strong>担当者:</strong> 山田太郎
+            </div>
+        </div>
+
+        <div class="search-section">
+            <h3 class="search-title">検索条件</h3>
+            <form class="search-form">
+                <div class="form-group">
+                    <label for="subject">件名</label>
+                    <input type="text" id="subject" name="subject" placeholder="件名を入力">
+                </div>
+                <div class="form-group">
+                    <label for="request-number">依頼番号</label>
+                    <input type="text" id="request-number" name="request-number" placeholder="依頼番号を入力">
+                </div>
+                <div class="form-group">
+                    <label for="assignee">担当者</label>
+                    <select id="assignee" name="assignee">
+                        <option value="">選択してください</option>
+                        <option value="田中太郎">田中太郎</option>
+                        <option value="佐藤花子">佐藤花子</option>
+                        <option value="山田次郎">山田次郎</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="request-date-from">見積依頼日（開始）</label>
+                    <input type="date" id="request-date-from" name="request-date-from">
+                </div>
+                <div class="form-group">
+                    <label for="request-date-to">見積依頼日（終了）</label>
+                    <input type="date" id="request-date-to" name="request-date-to">
+                </div>
+                <div class="form-group">
+                    <label for="deadline">回答期限</label>
+                    <input type="date" id="deadline" name="deadline">
+                </div>
+                <div class="form-group">
+                    <label for="status">状況</label>
+                    <select id="status" name="status">
+                        <option value="">すべて</option>
+                        <option value="submitted">依頼済み</option>
+                        <option value="estimating">見積中</option>
+                        <option value="completed">見積済み</option>
+                    </select>
+                </div>
+            </form>
+            <div class="search-buttons">
+                <button type="button" class="btn btn-secondary">クリア</button>
+                <button type="submit" class="btn btn-primary">検索</button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="results-header">
+                <span class="results-count">検索結果: 8件</span>
+                <span class="filter-note">※見積作成中の案件は表示されません</span>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>依頼番号</th>
+                            <th>件名</th>
+                            <th>IT部門担当者</th>
+                            <th>見積依頼日</th>
+                            <th>回答期限</th>
+                            <th>回答実績日</th>
+                            <th>状況</th>
+                            <th>見積情報</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>REQ-2024-001</td>
+                            <td>ECサイト構築プロジェクト</td>
+                            <td>田中太郎</td>
+                            <td>2024-06-01</td>
+                            <td>2024-06-15</td>
+                            <td>2024-06-14</td>
+                            <td><span class="status status-completed">見積済み</span></td>
+                            <td>
+                                <div class="estimate-info">
+                                    <div class="estimate-price">¥5,000,000</div>
+                                    <div>見積番号: EST-2024-001</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary btn-small">詳細</button>
+                                    <button class="btn btn-secondary btn-small">編集</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>REQ-2024-002</td>
+                            <td>在庫管理システム改修</td>
+                            <td>佐藤花子</td>
+                            <td>2024-06-05</td>
+                            <td>2024-06-20</td>
+                            <td>-</td>
+                            <td><span class="status status-estimating">見積中</span></td>
+                            <td>
+                                <div class="estimate-info">
+                                    <div style="color: #666;">見積作成中</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary btn-small">詳細</button>
+                                    <button class="btn btn-secondary btn-small">見積作成</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>REQ-2024-003</td>
+                            <td>モバイルアプリ開発</td>
+                            <td>山田次郎</td>
+                            <td>2024-06-10</td>
+                            <td>2024-06-25</td>
+                            <td>-</td>
+                            <td><span class="status status-submitted">依頼済み</span></td>
+                            <td>
+                                <div class="estimate-info">
+                                    <div style="color: #666;">未回答</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary btn-small">詳細</button>
+                                    <button class="btn btn-secondary btn-small">見積作成</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>REQ-2024-005</td>
+                            <td>データ分析基盤構築</td>
+                            <td>田中太郎</td>
+                            <td>2024-06-12</td>
+                            <td>2024-06-30</td>
+                            <td>2024-06-15</td>
+                            <td><span class="status status-completed">見積済み</span></td>
+                            <td>
+                                <div class="estimate-info">
+                                    <div class="estimate-price">¥8,500,000</div>
+                                    <div>見積番号: EST-2024-003</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary btn-small">詳細</button>
+                                    <button class="btn btn-secondary btn-small">編集</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <button>&lt;</button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>&gt;</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
