@@ -91,7 +91,7 @@ export default function SpecificationsPage() {
   const fetchSpecifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/specifications');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/specifications`);
       if (!response.ok) {
         throw new Error('Failed to fetch specifications');
       }
@@ -136,7 +136,7 @@ export default function SpecificationsPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/specifications', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/specifications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

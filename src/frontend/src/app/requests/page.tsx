@@ -1,135 +1,199 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Upload, X } from "lucide-react";
+
+interface EstimateRequest {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'draft' | 'submitted' | 'in_review' | 'approved' | 'rejected';
+  requestDate: string;
+  dueDate: string;
+  attachments: string[];
+}
 
 export default function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [requests, setRequests] = useState([
-    {
-      id: "REQ-001",
-      title: "新システム開発見積依頼",
-      specId: "SPEC-001",
-      status: "承認待ち",
-      createdDate: "2025-06-25",
-      dueDate: "2025-07-10",
-      vendor: "株式会社テックソリューション",
-      estimatedAmount: "5,000,000円",
-      attachments: ["仕様書.pdf", "要件定義書.docx"]
-    },
-    {
-      id: "REQ-002",
-      title: "インフラ構築見積依頼", 
-      specId: "SPEC-002",
-      status: "進行中",
-      createdDate: "2025-06-24",
-      dueDate: "2025-07-05",
-      vendor: "クラウドインフラ株式会社",
-      estimatedAmount: "3,000,000円",
-      attachments: ["構築仕様書.pdf"]
-    },
-    {
-      id: "REQ-003",
-      title: "セキュリティ監査見積依頼",
-      specId: "SPEC-003", 
-      status: "完了",
-      createdDate: "2025-06-23",
-      dueDate: "2025-06-30",
-      vendor: "セキュリティ監査法人",
-      estimatedAmount: "1,500,000円",
-      attachments: ["監査要項.pdf", "チェックリスト.xlsx"]
-    }
-  ]);
+  const [requests, setRequests] = useState<EstimateRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [newRequest, setNewRequest] = useState({
     title: "",
-    specId: "",
-    vendor: "",
-    dueDate: "",
-    estimatedAmount: "",
-    description: ""
+    description: "",
+    priority: "medium" as 'high' | 'medium' | 'low',
+    dueDate: ""
   });
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch requests');
+      }
+      const data = await response.json();
+      setRequests(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching requests:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredRequests = requests.filter(request =>
     request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    request.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    request.vendor.toLowerCase().includes(searchTerm.toLowerCase())
+    request.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "完了": return "text-green-600 bg-green-50";
-      case "承認待ち": return "text-yellow-600 bg-yellow-50";
-      case "進行中": return "text-blue-600 bg-blue-50";
+      case "approved": return "text-green-600 bg-green-50";
+      case "submitted": return "text-yellow-600 bg-yellow-50";
+      case "in_review": return "text-blue-600 bg-blue-50";
+      case "draft": return "text-gray-600 bg-gray-50";
+      case "rejected": return "text-red-600 bg-red-50";
       default: return "text-gray-600 bg-gray-50";
     }
   };
 
-  const mockSpecs = [
-    { id: "SPEC-001", title: "新システム開発仕様書" },
-    { id: "SPEC-002", title: "インフラ構築仕様書" },
-    { id: "SPEC-003", title: "セキュリティ監査仕様書" }
-  ];
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "approved": return "承認済み";
+      case "submitted": return "提出済み";
+      case "in_review": return "審査中";
+      case "draft": return "下書き";
+      case "rejected": return "却下";
+      default: return status;
+    }
+  };
 
-  const mockVendors = [
-    "株式会社テックソリューション",
-    "クラウドインフラ株式会社", 
-    "セキュリティ監査法人",
-    "システム開発株式会社",
-    "ITコンサルティング株式会社"
-  ];
+  const getPriorityText = (priority: string) => {
+    switch (priority) {
+      case "high": return "高";
+      case "medium": return "中";
+      case "low": return "低";
+      default: return priority;
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high": return "text-red-600 bg-red-50";
+      case "medium": return "text-yellow-600 bg-yellow-50";
+      case "low": return "text-green-600 bg-green-50";
+      default: return "text-gray-600 bg-gray-50";
+    }
+  };
 
   const handleCreateRequest = () => {
     setShowCreateModal(true);
   };
 
-  const handleSaveRequest = () => {
-    if (!newRequest.title.trim() || !newRequest.specId || !newRequest.vendor || !newRequest.dueDate) {
-      alert("必須項目をすべて入力してください。");
+  const handleSaveRequest = async () => {
+    if (!newRequest.title || !newRequest.description || !newRequest.dueDate) {
+      alert('すべての必須項目を入力してください。');
       return;
     }
 
-    const newRequestId = `REQ-${String(requests.length + 1).padStart(3, '0')}`;
-    const today = new Date().toISOString().split('T')[0];
-    
-    const newEstimateRequest = {
-      id: newRequestId,
-      title: newRequest.title,
-      specId: newRequest.specId,
-      status: "承認待ち",
-      createdDate: today,
-      dueDate: newRequest.dueDate,
-      vendor: newRequest.vendor,
-      estimatedAmount: newRequest.estimatedAmount || "未設定",
-      attachments: []
-    };
+    try {
+      let attachmentIds: string[] = [];
+      
+      if (selectedFiles.length > 0) {
+        const formData = new FormData();
+        selectedFiles.forEach(file => {
+          formData.append('files', file);
+        });
 
-    setRequests(prev => [...prev, newEstimateRequest]);
-    setShowCreateModal(false);
-    setNewRequest({
-      title: "",
-      specId: "",
-      vendor: "",
-      dueDate: "",
-      estimatedAmount: "",
-      description: ""
-    });
-    
-    console.log("新規見積依頼作成:", newEstimateRequest);
+        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload files');
+        }
+
+        const uploadData = await uploadResponse.json();
+        attachmentIds = uploadData.file_ids || [];
+      }
+
+      const requestData = {
+        title: newRequest.title,
+        description: newRequest.description,
+        priority: newRequest.priority,
+        due_date: newRequest.dueDate,
+        attachment_ids: attachmentIds
+      };
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create request');
+      }
+
+      await fetchRequests();
+      
+      setNewRequest({
+        title: '',
+        description: '',
+        priority: 'medium',
+        dueDate: ''
+      });
+      setSelectedFiles([]);
+      setShowCreateModal(false);
+      alert('見積依頼が正常に作成されました。');
+    } catch (err) {
+      console.error('Error creating request:', err);
+      alert('見積依頼の作成に失敗しました。');
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleCancelCreate = () => {
     setShowCreateModal(false);
     setNewRequest({
       title: "",
-      specId: "",
-      vendor: "",
-      dueDate: "",
-      estimatedAmount: "",
-      description: ""
+      description: "",
+      priority: "medium",
+      dueDate: ""
     });
+    setSelectedFiles([]);
   };
 
   return (
@@ -161,78 +225,73 @@ export default function RequestsPage() {
           </Button>
         </div>
 
-        <div className="grid gap-6">
-          {filteredRequests.map((request) => (
-            <Card key={request.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{request.title}</CardTitle>
-                    <CardDescription className="mt-1">
-                      {request.id} • 仕様書: {request.specId} • 作成日: {request.createdDate}
-                    </CardDescription>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
-                    {request.status}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">ベンダー</h4>
-                    <p className="text-sm">{request.vendor}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">見積金額</h4>
-                    <p className="text-sm font-medium">{request.estimatedAmount}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">回答期限</h4>
-                    <p className="text-sm">{request.dueDate}</p>
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <h4 className="font-medium text-sm text-muted-foreground mb-2">添付ファイル</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {request.attachments.map((file, index) => (
-                      <span key={index} className="px-2 py-1 bg-muted rounded text-xs">
-                        📎 {file}
+        {loading ? (
+          <div className="text-center py-8">
+            <p>読み込み中...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-600">
+            <p>エラー: {error}</p>
+            <Button onClick={fetchRequests} className="mt-4">
+              再試行
+            </Button>
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>検索条件に一致する見積依頼が見つかりません。</p>
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {filteredRequests.map((request) => (
+              <Card key={request.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{request.title}</CardTitle>
+                      <CardDescription className="mt-1">
+                        {request.id} • 作成日: {request.requestDate}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
+                        {getStatusText(request.status)}
                       </span>
-                    ))}
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(request.priority)}`}>
+                        優先度: {getPriorityText(request.priority)}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4">{request.description}</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">希望納期</h4>
+                      <p className="text-sm">{request.dueDate}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">添付ファイル</h4>
+                      <p className="text-sm">{request.attachments.length}個のファイル</p>
+                    </div>
+                  </div>
 
-                <div className="flex justify-between items-center pt-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    期限まで: {Math.ceil((new Date(request.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}日
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      詳細表示
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      編集
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      コピー作成
-                    </Button>
-                    {request.status === "進行中" && (
-                      <Button size="sm" className="bg-secondary hover:bg-secondary/90">
-                        催促メール
+                  <div className="flex justify-between items-center pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      期限まで: {Math.ceil((new Date(request.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}日
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        詳細表示
                       </Button>
-                    )}
+                      <Button variant="outline" size="sm">
+                        編集
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredRequests.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">検索条件に一致する見積依頼が見つかりません。</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
 
@@ -244,7 +303,7 @@ export default function RequestsPage() {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">依頼タイトル</label>
+                  <label className="block text-sm font-medium mb-2">依頼タイトル *</label>
                   <Input
                     value={newRequest.title}
                     onChange={(e) => setNewRequest(prev => ({ ...prev, title: e.target.value }))}
@@ -254,60 +313,7 @@ export default function RequestsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">関連仕様書</label>
-                  <select
-                    value={newRequest.specId}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, specId: e.target.value }))}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">仕様書を選択してください</option>
-                    {mockSpecs.map(spec => (
-                      <option key={spec.id} value={spec.id}>
-                        {spec.id} - {spec.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">ベンダー</label>
-                  <select
-                    value={newRequest.vendor}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, vendor: e.target.value }))}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">ベンダーを選択してください</option>
-                    {mockVendors.map(vendor => (
-                      <option key={vendor} value={vendor}>
-                        {vendor}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">回答期限</label>
-                    <Input
-                      type="date"
-                      value={newRequest.dueDate}
-                      onChange={(e) => setNewRequest(prev => ({ ...prev, dueDate: e.target.value }))}
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">予算上限</label>
-                    <Input
-                      value={newRequest.estimatedAmount}
-                      onChange={(e) => setNewRequest(prev => ({ ...prev, estimatedAmount: e.target.value }))}
-                      placeholder="例: 5,000,000円"
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">詳細説明</label>
+                  <label className="block text-sm font-medium mb-2">詳細説明 *</label>
                   <textarea
                     value={newRequest.description}
                     onChange={(e) => setNewRequest(prev => ({ ...prev, description: e.target.value }))}
@@ -316,16 +322,75 @@ export default function RequestsPage() {
                   />
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">優先度</label>
+                    <select
+                      value={newRequest.priority}
+                      onChange={(e) => setNewRequest(prev => ({ ...prev, priority: e.target.value as 'high' | 'medium' | 'low' }))}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="low">低</option>
+                      <option value="medium">中</option>
+                      <option value="high">高</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">希望納期 *</label>
+                    <Input
+                      type="date"
+                      value={newRequest.dueDate}
+                      onChange={(e) => setNewRequest(prev => ({ ...prev, dueDate: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-2">添付ファイル</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <p className="text-sm text-gray-500">
-                      ファイルをドラッグ＆ドロップするか、クリックして選択してください
+                  <div 
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+                    onDrop={handleFileDrop}
+                    onDragOver={handleDragOver}
+                  >
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">
+                      ファイルをドラッグ&ドロップするか、クリックして選択
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      PDF, Word, Excel, PowerPoint (最大10MB)
-                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      id="file-upload"
+                      onChange={handleFileSelect}
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="mt-2 inline-block px-4 py-2 bg-gray-100 text-gray-700 rounded-md cursor-pointer hover:bg-gray-200"
+                    >
+                      ファイルを選択
+                    </label>
                   </div>
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-sm font-medium text-gray-700 mb-2">選択されたファイル:</p>
+                      <div className="space-y-2">
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                            <span className="text-sm text-gray-600">{file.name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFile(index)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -339,7 +404,7 @@ export default function RequestsPage() {
                 <Button
                   onClick={handleSaveRequest}
                   className="bg-primary hover:bg-primary/90"
-                  disabled={!newRequest.title.trim() || !newRequest.specId || !newRequest.vendor}
+                  disabled={!newRequest.title.trim() || !newRequest.description.trim() || !newRequest.dueDate}
                 >
                   作成
                 </Button>

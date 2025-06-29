@@ -79,7 +79,7 @@ export default function ApprovalsPage() {
     if (selectedApprovals.length === 0) return;
     
     try {
-      const response = await fetch('http://localhost:8000/api/approvals/bulk-approve', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/bulk-approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ export default function ApprovalsPage() {
 
   const handleApprove = async (approvalId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/approvals/${approvalId}/approve`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/${approvalId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ export default function ApprovalsPage() {
 
   const handleReject = async (approvalId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/approvals/${approvalId}/reject`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/${approvalId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

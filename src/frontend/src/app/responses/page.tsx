@@ -53,7 +53,7 @@ export default function ResponsesPage() {
     if (selectedResponses.length === 0) return;
     
     try {
-      const response = await fetch('http://localhost:8000/api/responses/bulk-evaluate', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/bulk-evaluate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
