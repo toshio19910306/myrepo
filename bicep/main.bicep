@@ -71,14 +71,14 @@ resource postgresFirewallRule 'Microsoft.DBforPostgreSQL/flexibleServers/firewal
   }
 }
 
-// Web App
+// Web App for Backend
 resource webApp 'Microsoft.Web/sites@2022-03-01' = {
-  name: appName
+  name: '${appName}-backend'
   location: location
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      linuxFxVersion: 'NODE|18-lts'
+      linuxFxVersion: 'DOCKER|rust:1.75'
       appSettings: [
         {
           name: 'DATABASE_URL'
@@ -86,27 +86,23 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'JWT_SECRET'
-          value: 'your-production-secret-key-${uniqueString(resourceGroup().id)}'
+          value: 'production-jwt-secret-${uniqueString(resourceGroup().id)}'
         }
         {
-          name: 'UPLOAD_DIR'
-          value: '/tmp/uploads'
+          name: 'CORS_ORIGINS'
+          value: 'https://${appName}-frontend.azurestaticapps.net'
         }
         {
-          name: 'MAX_FILE_SIZE'
-          value: '10485760'
+          name: 'ENVIRONMENT'
+          value: 'production'
         }
         {
           name: 'PORT'
           value: '8000'
         }
         {
-          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-          value: 'true'
-        }
-        {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '18.x'
+          name: 'WEBSITES_PORT'
+          value: '8000'
         }
       ]
       alwaysOn: true
@@ -114,7 +110,24 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   }
 }
 
-// Output the web app URL
-output webAppUrl string = 'https://${webApp.properties.defaultHostName}'
+// Static Web App for Frontend
+resource staticWebApp 'Microsoft.Web/staticSites@2022-03-01' = {
+  name: '${appName}-frontend'
+  location: location
+  sku: {
+    name: 'Free'
+    tier: 'Free'
+  }
+  properties: {
+    buildProperties: {
+      appLocation: '/src/frontend'
+      outputLocation: 'out'
+    }
+  }
+}
+
+// Output URLs
+output backendUrl string = 'https://${webApp.properties.defaultHostName}'
+output frontendUrl string = 'https://${staticWebApp.properties.defaultHostname}'
 output postgresServerName string = postgresServer.name
 output postgresFQDN string = postgresServer.properties.fullyQualifiedDomainName

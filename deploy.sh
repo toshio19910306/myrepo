@@ -13,6 +13,15 @@ echo "Using resource group: $RESOURCE_GROUP"
 echo "Using location: $LOCATION"
 echo "Using app name: $APP_NAME"
 
+echo "Logging in to Azure with service principal..."
+az login --service-principal \
+  --username "c7bfba26-e1c7-4e60-86c5-5344eb65e6d5" \
+  --password "${Devin_test_app_Secret_SECRET_VALUE}" \
+  --tenant "d0000d8b-2d8b-4472-bbe0-766e72c3612b"
+
+echo "Setting subscription..."
+az account set --subscription "b9237209-38a6-4aa4-8199-cdceceb61c20"
+
 echo "Deploying infrastructure with Bicep..."
 az deployment group create \
   --resource-group $RESOURCE_GROUP \
