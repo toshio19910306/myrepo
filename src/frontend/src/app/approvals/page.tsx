@@ -11,7 +11,22 @@ export default function ApprovalsPage() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
-  const [selectedApproval, setSelectedApproval] = useState<any>(null);
+  const [selectedApproval, setSelectedApproval] = useState<{
+    id: string;
+    type: string;
+    title: string;
+    requestId: string;
+    requester: string;
+    department: string;
+    currentStep: number;
+    totalSteps: number;
+    currentApprover: string;
+    status: string;
+    submittedDate: string;
+    dueDate: string;
+    amount: string;
+    history: Array<{step: number, action: string, user: string, date: string, status: string}>;
+  } | null>(null);
 
   const mockApprovals = [
     {
@@ -410,7 +425,7 @@ export default function ApprovalsPage() {
               </button>
             </div>
             <div className="space-y-4">
-              {selectedApproval.history.map((step: any, index: number) => (
+              {selectedApproval.history.map((step: {step: number, action: string, user: string, date: string, status: string}, index: number) => (
                 <div key={index} className="border-b pb-3">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">ステップ {step.step}: {step.action}</span>

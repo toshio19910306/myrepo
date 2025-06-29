@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 export default function ResponsesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedResponses, setSelectedResponses] = useState<string[]>([])
-  const [bulkEvaluationStatus, setBulkEvaluationStatus] = useState("APPROVED");
+  const [bulkEvaluationStatus] = useState("APPROVED");
 
   const mockResponses = [
     {
