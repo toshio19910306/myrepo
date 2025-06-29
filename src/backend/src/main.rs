@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let cors = CorsLayer::new()
-        .allow_origin("https://attachment-environment-app-tunnel-1e0fvp0s.devinapps.com".parse::<HeaderValue>().unwrap())
+        .allow_origin("https://attachment-environment-app-tunnel-qwcxwna1.devinapps.com".parse::<HeaderValue>().unwrap())
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
         .allow_credentials(true);
