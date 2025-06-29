@@ -91,7 +91,21 @@ export default function SpecificationsPage() {
   const fetchSpecifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/specifications`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (apiAuth) {
+        headers['Authorization'] = `Basic ${btoa(apiAuth)}`;
+      }
+      
+      const response = await fetch(`${apiUrl}/api/specifications`, {
+        headers,
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch specifications');
       }
@@ -136,11 +150,21 @@ export default function SpecificationsPage() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/specifications`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (apiAuth) {
+        headers['Authorization'] = `Basic ${btoa(apiAuth)}`;
+      }
+      
+      const response = await fetch(`${apiUrl}/api/specifications`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           spec_number: `SPEC-${Date.now()}`,
           title: newSpec.title,
