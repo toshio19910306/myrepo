@@ -41,10 +41,14 @@ pub async fn create_request(pool: &PgPool, request: CreateEstimateRequestRequest
     } else if let Ok(date) = NaiveDate::parse_from_str(&request.deadline, "%Y-%m-%d") {
         Utc.from_utc_datetime(&date.and_hms_opt(23, 59, 59).unwrap())
     } else {
-        return Err(anyhow::anyhow!("Invalid deadline format: {}", request.deadline));
+        return Err(anyhow::anyhow!("無効な日付形式です。YYYY-MM-DD形式で入力してください: {}", request.deadline));
     };
     
-    let created_by = request.created_by.unwrap_or(1);
+    if request.created_by <= 0 {
+        return Err(anyhow::anyhow!("無効なユーザーIDです"));
+    }
+    
+    let created_by = request.created_by;
     
     let estimate_request = sqlx::query_as::<_, EstimateRequest>(
         "INSERT INTO estimate_requests (spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, status, created_by, created_at, updated_at)
@@ -61,18 +65,25 @@ pub async fn create_request(pool: &PgPool, request: CreateEstimateRequestRequest
     .bind(created_by)
     .bind(Utc::now())
     .fetch_one(pool)
-    .await?;
+    .await
+    .map_err(|e| anyhow::anyhow!("データベースへの保存に失敗しました: {}", e))?;
 
     if let Some(attachment_ids) = request.attachment_ids {
         for file_id in attachment_ids {
             if let Ok(uuid) = Uuid::parse_str(&file_id) {
-                let _ = sqlx::query(
+                let result = sqlx::query(
                     "UPDATE attached_files SET target_type = 'REQUEST', target_id = $1 WHERE file_id = $2"
                 )
                 .bind(estimate_request.request_id)
                 .bind(uuid)
                 .execute(pool)
                 .await;
+                
+                if let Err(e) = result {
+                    eprintln!("添付ファイルの更新に失敗しました: {}", e);
+                }
+            } else {
+                eprintln!("無効なファイルID形式: {}", file_id);
             }
         }
     }

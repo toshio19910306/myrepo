@@ -25,12 +25,14 @@ pub struct CreateEstimateRequestRequest {
     pub spec_id: Option<i32>,
     #[validate(length(min = 1, max = 200))]
     pub subject: String,
-    pub description: Option<String>,
+    #[validate(length(min = 1))]
+    pub description: String,
+    #[validate(length(min = 1))]
     pub deadline: String,
     pub budget_range_min: Option<Decimal>,
     pub budget_range_max: Option<Decimal>,
     pub requirements: Option<String>,
-    pub created_by: Option<i32>,
+    pub created_by: i32,
     pub attachment_ids: Option<Vec<String>>,
 }
 

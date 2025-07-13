@@ -99,12 +99,14 @@ export default function RequestsPage() {
   };
 
   const handleSaveRequest = async () => {
-    if (!newRequest.title || !newRequest.description || !newRequest.dueDate) {
-      alert('すべての必須項目を入力してください。');
+    if (!newRequest.title?.trim() || !newRequest.description?.trim() || !newRequest.dueDate) {
+      alert('すべての必須項目を入力してください。\n・依頼タイトル\n・詳細説明\n・希望納期');
       return;
     }
 
     try {
+      setLoading(true);
+      
       let attachmentIds: string[] = [];
       
       if (selectedFiles.length > 0) {
@@ -160,7 +162,8 @@ export default function RequestsPage() {
         subject: newRequest.title,
         description: newRequest.description,
         deadline: formattedDate,
-        attachment_ids: attachmentIds
+        attachment_ids: attachmentIds,
+        created_by: 1
       };
       
       console.log('Final request data being sent:', requestData);
@@ -174,7 +177,14 @@ export default function RequestsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create request');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error?.message || 'API request failed');
       }
 
       await fetchRequests();
@@ -189,7 +199,10 @@ export default function RequestsPage() {
       alert('見積依頼が正常に作成されました。');
     } catch (err) {
       console.error('Error creating request:', err);
-      alert('見積依頼の作成に失敗しました。詳細: ' + (err instanceof Error ? err.message : '不明なエラー'));
+      const errorMessage = err instanceof Error ? err.message : '不明なエラーが発生しました';
+      alert(`見積依頼の作成に失敗しました。\n詳細: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
   };
 

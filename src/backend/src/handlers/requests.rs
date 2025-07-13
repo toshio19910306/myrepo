@@ -162,8 +162,9 @@ async fn create_request(
             Json(ErrorResponse {
                 success: false,
                 error: json!({
-                    "code": "INTERNAL_ERROR",
-                    "message": e.to_string()
+                    "code": "CREATE_REQUEST_ERROR",
+                    "message": format!("見積依頼の作成に失敗しました: {}", e),
+                    "details": e.to_string()
                 }),
                 timestamp: chrono::Utc::now().to_rfc3339(),
             }),
