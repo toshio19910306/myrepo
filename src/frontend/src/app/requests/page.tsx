@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Trash2 } from "lucide-react";
 
 interface EstimateRequest {
   request_id: number;
@@ -36,10 +36,14 @@ interface Specification {
 export default function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [requests, setRequests] = useState<EstimateRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [editingRequest, setEditingRequest] = useState<any>(null);
+  const [deletingRequestId, setDeletingRequestId] = useState<number | null>(null);
   const [newRequest, setNewRequest] = useState({
     title: "",
     description: "",
@@ -248,6 +252,98 @@ export default function RequestsPage() {
     setSelectedFiles([]);
   };
 
+  const handleEditRequest = async (request: EstimateRequest) => {
+    try {
+      const response = await fetch(`/api/requests/${request.request_id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEditingRequest({
+          ...data.data,
+          title: data.data.subject,
+          dueDate: data.data.deadline ? data.data.deadline.split('T')[0] : ''
+        });
+        setShowEditModal(true);
+      } else {
+        console.error('見積依頼の取得に失敗しました');
+      }
+    } catch (error) {
+      console.error('見積依頼の取得エラー:', error);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingRequest.title.trim() || !editingRequest.description.trim() || !editingRequest.dueDate) {
+      alert('必須項目を入力してください');
+      return;
+    }
+
+    try {
+      const requestData = {
+        subject: editingRequest.title,
+        description: editingRequest.description,
+        deadline: editingRequest.dueDate,
+        specification_id: editingRequest.specification_id || null
+      };
+
+      const response = await fetch(`/api/requests/${editingRequest.request_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (response.ok) {
+        setShowEditModal(false);
+        setEditingRequest(null);
+        fetchRequests();
+      } else {
+        const errorData = await response.json();
+        console.error('見積依頼の更新に失敗しました:', errorData);
+        alert('見積依頼の更新に失敗しました');
+      }
+    } catch (error) {
+      console.error('見積依頼の更新エラー:', error);
+      alert('見積依頼の更新中にエラーが発生しました');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowEditModal(false);
+    setEditingRequest(null);
+  };
+
+  const handleDeleteRequest = (requestId: number) => {
+    setDeletingRequestId(requestId);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await fetch(`/api/requests/${deletingRequestId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setShowDeleteModal(false);
+        setDeletingRequestId(null);
+        fetchRequests();
+      } else {
+        const errorData = await response.json();
+        console.error('見積依頼の削除に失敗しました:', errorData);
+        alert('見積依頼の削除に失敗しました');
+      }
+    } catch (error) {
+      console.error('見積依頼の削除エラー:', error);
+      alert('見積依頼の削除中にエラーが発生しました');
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingRequestId(null);
+  };
+
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto">
@@ -335,12 +431,24 @@ export default function RequestsPage() {
                       期限まで: {Math.ceil((new Date(request.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}日
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        詳細表示
-                      </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditRequest(request)}
+                      >
                         編集
                       </Button>
+                      {request.status === "DRAFT" && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteRequest(request.request_id)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          削除
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -473,6 +581,207 @@ export default function RequestsPage() {
             </div>
           </div>
         )}
+
+        {/* 編集モーダル */}
+        {showEditModal && editingRequest && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-bold text-primary mb-6">見積依頼編集</h2>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">依頼タイトル *</label>
+                  <Input
+                    value={editingRequest.title}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, title: e.target.value }))}
+                    placeholder="見積依頼のタイトルを入力してください"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">詳細説明 *</label>
+                  <textarea
+                    value={editingRequest.description}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, description: e.target.value }))}
+                    placeholder="見積依頼の詳細内容を入力してください"
+                    className="w-full p-2 border border-gray-300 rounded-md h-24 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">関連仕様書</label>
+                  <select
+                    value={editingRequest.specification_id || ''}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, specification_id: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">仕様書を選択してください（任意）</option>
+                    {specifications.map((spec) => (
+                      <option key={spec.spec_id} value={spec.spec_id}>
+                        {spec.spec_number} - {spec.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">希望納期 *</label>
+                  <input
+                    type="date"
+                    value={editingRequest.dueDate}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, dueDate: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  className="bg-primary hover:bg-primary/90"
+                  disabled={!editingRequest.title.trim() || !editingRequest.description.trim() || !editingRequest.dueDate}
+                >
+                  更新
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 削除確認モーダル */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">見積依頼の削除</h2>
+              <p className="text-gray-600 mb-6">
+                この見積依頼を削除してもよろしいですか？<br />
+                この操作は取り消すことができません。
+              </p>
+              <div className="flex justify-end gap-4">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelDelete}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  削除
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 編集モーダル */}
+        {showEditModal && editingRequest && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-bold text-primary mb-6">見積依頼編集</h2>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">依頼タイトル *</label>
+                  <Input
+                    value={editingRequest.title}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, title: e.target.value }))}
+                    placeholder="見積依頼のタイトルを入力してください"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">詳細説明 *</label>
+                  <textarea
+                    value={editingRequest.description}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, description: e.target.value }))}
+                    placeholder="見積依頼の詳細内容を入力してください"
+                    className="w-full p-2 border border-gray-300 rounded-md h-24 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">関連仕様書</label>
+                  <select
+                    value={editingRequest.specification_id || ''}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, specification_id: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">仕様書を選択してください（任意）</option>
+                    {specifications.map((spec) => (
+                      <option key={spec.spec_id} value={spec.spec_id}>
+                        {spec.spec_number} - {spec.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">希望納期 *</label>
+                  <input
+                    type="date"
+                    value={editingRequest.dueDate}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, dueDate: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  className="bg-primary hover:bg-primary/90"
+                  disabled={!editingRequest.title.trim() || !editingRequest.description.trim() || !editingRequest.dueDate}
+                >
+                  更新
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 削除確認モーダル */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">見積依頼の削除</h2>
+              <p className="text-gray-600 mb-6">
+                この見積依頼を削除してもよろしいですか？<br />
+                この操作は取り消すことができません。
+              </p>
+              <div className="flex justify-end gap-4">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelDelete}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  削除
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
