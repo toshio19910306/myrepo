@@ -81,6 +81,18 @@ pub async fn create_request(pool: &PgPool, request: CreateEstimateRequestRequest
 }
 
 pub async fn update_request(pool: &PgPool, request_id: i32, request: UpdateEstimateRequestRequest) -> Result<Option<EstimateRequest>> {
+    let deadline = if let Some(deadline_str) = &request.deadline {
+        if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(deadline_str) {
+            Some(dt.with_timezone(&Utc))
+        } else if let Ok(date) = NaiveDate::parse_from_str(deadline_str, "%Y-%m-%d") {
+            Some(Utc.from_utc_datetime(&date.and_hms_opt(23, 59, 59).unwrap()))
+        } else {
+            return Err(anyhow::anyhow!("Invalid deadline format: {}", deadline_str));
+        }
+    } else {
+        None
+    };
+
     let estimate_request = sqlx::query_as::<_, EstimateRequest>(
         "UPDATE estimate_requests 
          SET spec_id = COALESCE($2, spec_id), subject = COALESCE($3, subject), description = COALESCE($4, description), deadline = COALESCE($5, deadline), budget_range_min = COALESCE($6, budget_range_min), budget_range_max = COALESCE($7, budget_range_max), requirements = COALESCE($8, requirements), status = COALESCE($9, status), updated_at = $10
@@ -91,7 +103,7 @@ pub async fn update_request(pool: &PgPool, request_id: i32, request: UpdateEstim
     .bind(&request.spec_id)
     .bind(&request.subject)
     .bind(&request.description)
-    .bind(&request.deadline)
+    .bind(&deadline)
     .bind(&request.budget_range_min)
     .bind(&request.budget_range_max)
     .bind(&request.requirements)

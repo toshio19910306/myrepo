@@ -282,7 +282,7 @@ export default function RequestsPage() {
         subject: editingRequest.title,
         description: editingRequest.description,
         deadline: editingRequest.dueDate,
-        specification_id: editingRequest.specification_id || null
+        spec_id: editingRequest.spec_id || null
       };
 
       const response = await fetch(`/api/requests/${editingRequest.request_id}`, {
@@ -612,108 +612,8 @@ export default function RequestsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">関連仕様書</label>
                   <select
-                    value={editingRequest.specification_id || ''}
-                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, specification_id: e.target.value }))}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">仕様書を選択してください（任意）</option>
-                    {specifications.map((spec) => (
-                      <option key={spec.spec_id} value={spec.spec_id}>
-                        {spec.spec_number} - {spec.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">希望納期 *</label>
-                  <input
-                    type="date"
-                    value={editingRequest.dueDate}
-                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, dueDate: e.target.value }))}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-4 mt-8">
-                <Button
-                  variant="outline"
-                  onClick={handleCancelEdit}
-                >
-                  キャンセル
-                </Button>
-                <Button
-                  onClick={handleSaveEdit}
-                  className="bg-primary hover:bg-primary/90"
-                  disabled={!editingRequest.title.trim() || !editingRequest.description.trim() || !editingRequest.dueDate}
-                >
-                  更新
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 削除確認モーダル */}
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">見積依頼の削除</h2>
-              <p className="text-gray-600 mb-6">
-                この見積依頼を削除してもよろしいですか？<br />
-                この操作は取り消すことができません。
-              </p>
-              <div className="flex justify-end gap-4">
-                <Button
-                  variant="outline"
-                  onClick={handleCancelDelete}
-                >
-                  キャンセル
-                </Button>
-                <Button
-                  onClick={handleConfirmDelete}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  削除
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 編集モーダル */}
-        {showEditModal && editingRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold text-primary mb-6">見積依頼編集</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">依頼タイトル *</label>
-                  <Input
-                    value={editingRequest.title}
-                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, title: e.target.value }))}
-                    placeholder="見積依頼のタイトルを入力してください"
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">詳細説明 *</label>
-                  <textarea
-                    value={editingRequest.description}
-                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, description: e.target.value }))}
-                    placeholder="見積依頼の詳細内容を入力してください"
-                    className="w-full p-2 border border-gray-300 rounded-md h-24 resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">関連仕様書</label>
-                  <select
-                    value={editingRequest.specification_id || ''}
-                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, specification_id: e.target.value }))}
+                    value={editingRequest.spec_id || ''}
+                    onChange={(e) => setEditingRequest((prev: any) => ({ ...prev, spec_id: e.target.value }))}
                     className="w-full p-2 border border-gray-300 rounded-md"
                   >
                     <option value="">仕様書を選択してください（任意）</option>
