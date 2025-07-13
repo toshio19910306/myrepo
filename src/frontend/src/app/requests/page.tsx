@@ -131,31 +131,22 @@ export default function RequestsPage() {
       let formattedDate = newRequest.dueDate;
       console.log('Original date from form:', formattedDate);
       
-      if (formattedDate) {
-        if (formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          console.log('Date already in correct YYYY-MM-DD format');
+      if (formattedDate && !formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        console.log('Date not in YYYY-MM-DD format, attempting to fix...');
+        const dateObj = new Date(formattedDate);
+        if (!isNaN(dateObj.getTime())) {
+          const year = dateObj.getFullYear();
+          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(dateObj.getDate()).padStart(2, '0');
+          formattedDate = `${year}-${month}-${day}`;
+          console.log('Successfully reformatted date:', formattedDate);
         } else {
-          console.log('Date needs formatting, attempting to parse...');
-          
-          const dateObj = new Date(formattedDate);
-          if (!isNaN(dateObj.getTime())) {
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            formattedDate = `${year}-${month}-${day}`;
-            console.log('Successfully parsed date:', formattedDate);
-          } else {
-            console.log('Failed to parse date, keeping original:', formattedDate);
-            const numbers = formattedDate.match(/\d+/g);
-            if (numbers && numbers.length >= 3) {
-              const [yearPart, monthPart, dayPart] = numbers;
-              if (yearPart.length === 4 && monthPart.length <= 2 && dayPart.length <= 2) {
-                formattedDate = `${yearPart}-${monthPart.padStart(2, '0')}-${dayPart.padStart(2, '0')}`;
-                console.log('Extracted and formatted date:', formattedDate);
-              }
-            }
-          }
+          console.error('Invalid date format, cannot parse:', formattedDate);
+          alert('無効な日付形式です。正しい日付を入力してください。');
+          return;
         }
+      } else {
+        console.log('Date already in correct YYYY-MM-DD format');
       }
 
       const requestData = {
@@ -365,11 +356,16 @@ export default function RequestsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">希望納期 *</label>
-                  <Input
-                    type="date"
+                  <input
+                    type="text"
+                    placeholder="YYYY-MM-DD (例: 2025-02-15)"
                     value={newRequest.dueDate}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, dueDate: e.target.value }))}
-                    className="w-full"
+                    onChange={(e) => {
+                      const dateValue = e.target.value;
+                      console.log('Date input onChange:', dateValue);
+                      setNewRequest(prev => ({ ...prev, dueDate: dateValue }));
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 
