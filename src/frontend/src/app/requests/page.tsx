@@ -328,7 +328,7 @@ export default function RequestsPage() {
       console.log('Starting save edit process...');
       console.log('Selected files to upload:', editingSelectedFiles);
       
-      let uploadedFileIds: string[] = [];
+      const uploadedFileIds: string[] = [];
       
       if (editingSelectedFiles.length > 0) {
         console.log('Uploading', editingSelectedFiles.length, 'files...');
