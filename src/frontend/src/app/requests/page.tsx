@@ -328,33 +328,51 @@ export default function RequestsPage() {
       console.log('Starting save edit process...');
       console.log('Selected files to upload:', editingSelectedFiles);
       
+      let uploadedFileIds: string[] = [];
+      
       if (editingSelectedFiles.length > 0) {
         console.log('Uploading', editingSelectedFiles.length, 'files...');
-        for (const file of editingSelectedFiles) {
-          console.log('Uploading file:', file.name);
-          const formData = new FormData();
-          formData.append('target_type', 'REQUEST');
-          formData.append('target_id', editingRequest.request_id.toString());
-          formData.append('file', file);
-          
-          console.log('FormData prepared for file:', file.name);
-          console.log('Target ID:', editingRequest.request_id.toString());
-          
-          const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
-            method: 'POST',
-            body: formData,
-          });
-          
-          console.log('Upload response status:', uploadResponse.status);
-          
-          if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text();
-            console.error('Upload error response:', errorText);
-            throw new Error(`ファイル ${file.name} のアップロードに失敗しました: ${errorText}`);
-          } else {
+        
+        try {
+          for (const file of editingSelectedFiles) {
+            console.log('Uploading file:', file.name);
+            const formData = new FormData();
+            formData.append('target_type', 'REQUEST');
+            formData.append('target_id', editingRequest.request_id.toString());
+            formData.append('file', file);
+            
+            console.log('FormData prepared for file:', file.name);
+            console.log('Target ID:', editingRequest.request_id.toString());
+            
+            const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
+              method: 'POST',
+              body: formData,
+            });
+            
+            console.log('Upload response status:', uploadResponse.status);
+            
+            if (!uploadResponse.ok) {
+              const errorText = await uploadResponse.text();
+              console.error('Upload error response:', errorText);
+              throw new Error(`ファイル ${file.name} のアップロードに失敗しました: ${errorText}`);
+            }
+            
             const uploadResult = await uploadResponse.json();
             console.log('Upload successful for file:', file.name, uploadResult);
+            uploadedFileIds.push(uploadResult.data.file_id);
           }
+        } catch (uploadError) {
+          console.error('File upload failed, cleaning up uploaded files:', uploadError);
+          for (const fileId of uploadedFileIds) {
+            try {
+              await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/${fileId}`, {
+                method: 'DELETE',
+              });
+            } catch (cleanupError) {
+              console.error('Failed to cleanup file:', fileId, cleanupError);
+            }
+          }
+          throw uploadError;
         }
       } else {
         console.log('No files to upload');
@@ -385,14 +403,26 @@ export default function RequestsPage() {
         setEditingFiles([]);
         setEditingSelectedFiles([]);
         fetchRequests();
+        alert('見積依頼が正常に更新されました。');
       } else {
-        const errorData = await response.json();
+        console.error('Request update failed, cleaning up uploaded files');
+        for (const fileId of uploadedFileIds) {
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/${fileId}`, {
+              method: 'DELETE',
+            });
+          } catch (cleanupError) {
+            console.error('Failed to cleanup file:', fileId, cleanupError);
+          }
+        }
+        
+        const errorData = await response.json().catch(() => ({}));
         console.error('見積依頼の更新に失敗しました:', errorData);
-        alert('見積依頼の更新に失敗しました');
+        alert('見積依頼の更新に失敗しました。アップロードされたファイルは削除されました。');
       }
     } catch (error) {
       console.error('見積依頼の更新エラー:', error);
-      alert('見積依頼の更新中にエラーが発生しました');
+      alert('見積依頼の更新中にエラーが発生しました: ' + (error instanceof Error ? error.message : '不明なエラー'));
     }
   };
 
