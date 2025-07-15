@@ -184,3 +184,7 @@ pub async fn copy_request(pool: &PgPool, request_id: i32, created_by: i32) -> Re
         Ok(None)
     }
 }
+
+pub async fn get_approved_requests_for_vendor(pool: &PgPool) -> Result<Vec<EstimateRequest>> {
+    get_approved_requests(pool).await
+}

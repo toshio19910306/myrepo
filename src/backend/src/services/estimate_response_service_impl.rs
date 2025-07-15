@@ -8,7 +8,7 @@ pub async fn get_all_responses(pool: &PgPool, page: i32, per_page: i32) -> Resul
     let offset = (page - 1) * per_page;
     
     let responses = sqlx::query_as::<_, EstimateResponse>(
-        "SELECT response_id, request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at 
+        "SELECT response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
          FROM estimate_responses 
          ORDER BY created_at DESC 
          LIMIT $1 OFFSET $2"
@@ -23,7 +23,7 @@ pub async fn get_all_responses(pool: &PgPool, page: i32, per_page: i32) -> Resul
 
 pub async fn get_response_by_id(pool: &PgPool, response_id: i32) -> Result<Option<EstimateResponse>> {
     let response = sqlx::query_as::<_, EstimateResponse>(
-        "SELECT response_id, request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at 
+        "SELECT response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
          FROM estimate_responses 
          WHERE response_id = $1"
     )
@@ -35,18 +35,34 @@ pub async fn get_response_by_id(pool: &PgPool, response_id: i32) -> Result<Optio
 }
 
 pub async fn create_response(pool: &PgPool, request: CreateEstimateResponseRequest) -> Result<EstimateResponse> {
+    let delivery_date = request.delivery_date
+        .as_ref()
+        .map(|date_str| chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d"))
+        .transpose()
+        .map_err(|e| anyhow::anyhow!("Invalid date format for delivery_date: {}", e))?;
+
+    let response_date = request.response_date
+        .as_ref()
+        .map(|date_str| chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d"))
+        .transpose()
+        .map_err(|e| anyhow::anyhow!("Invalid date format for response_date: {}", e))?;
+
     let estimate_response = sqlx::query_as::<_, EstimateResponse>(
-        "INSERT INTO estimate_responses (request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $9)
-         RETURNING response_id, request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at"
+        "INSERT INTO estimate_responses (request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', $12, $13, $13)
+         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(request.request_id)
     .bind(request.vendor_id)
+    .bind(&request.estimate_number)
+    .bind(&request.estimate_price)
     .bind(&request.total_amount)
-    .bind(&serde_json::to_string(&request.breakdown)?)
-    .bind(&request.delivery_date)
+    .bind(&request.breakdown.as_ref().map(|b| serde_json::to_string(b)).transpose()?)
+    .bind(delivery_date)
     .bind(&request.validity_period)
     .bind(&request.terms_conditions)
+    .bind(&request.response_remarks)
+    .bind(response_date)
     .bind(request.created_by)
     .bind(Utc::now())
     .fetch_one(pool)
@@ -56,20 +72,36 @@ pub async fn create_response(pool: &PgPool, request: CreateEstimateResponseReque
 }
 
 pub async fn update_response(pool: &PgPool, response_id: i32, request: UpdateEstimateResponseRequest) -> Result<Option<EstimateResponse>> {
+    let delivery_date = request.delivery_date
+        .as_ref()
+        .map(|date_str| chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d"))
+        .transpose()
+        .map_err(|e| anyhow::anyhow!("Invalid date format for delivery_date: {}", e))?;
+
+    let response_date = request.response_date
+        .as_ref()
+        .map(|date_str| chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d"))
+        .transpose()
+        .map_err(|e| anyhow::anyhow!("Invalid date format for response_date: {}", e))?;
+
     let estimate_response = sqlx::query_as::<_, EstimateResponse>(
         "UPDATE estimate_responses 
-         SET request_id = COALESCE($2, request_id), vendor_id = COALESCE($3, vendor_id), total_amount = COALESCE($4, total_amount), breakdown = COALESCE($5, breakdown), delivery_date = COALESCE($6, delivery_date), validity_period = COALESCE($7, validity_period), terms_conditions = COALESCE($8, terms_conditions), status = COALESCE($9, status), updated_at = $10
+         SET request_id = COALESCE($2, request_id), vendor_id = COALESCE($3, vendor_id), estimate_number = COALESCE($4, estimate_number), estimate_price = COALESCE($5, estimate_price), total_amount = COALESCE($6, total_amount), breakdown = COALESCE($7, breakdown), delivery_date = COALESCE($8, delivery_date), validity_period = COALESCE($9, validity_period), terms_conditions = COALESCE($10, terms_conditions), response_remarks = COALESCE($11, response_remarks), response_date = COALESCE($12, response_date), status = COALESCE($13, status), updated_at = $14
          WHERE response_id = $1
-         RETURNING response_id, request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at"
+         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(response_id)
     .bind(&request.request_id)
     .bind(&request.vendor_id)
+    .bind(&request.estimate_number)
+    .bind(&request.estimate_price)
     .bind(&request.total_amount)
     .bind(&request.breakdown.as_ref().map(|b| serde_json::to_string(b)).transpose()?)
-    .bind(&request.delivery_date)
+    .bind(delivery_date)
     .bind(&request.validity_period)
     .bind(&request.terms_conditions)
+    .bind(&request.response_remarks)
+    .bind(response_date)
     .bind(&request.status)
     .bind(Utc::now())
     .fetch_optional(pool)
@@ -94,7 +126,7 @@ pub async fn submit_response(pool: &PgPool, response_id: i32) -> Result<Option<E
         "UPDATE estimate_responses 
          SET status = 'submitted', updated_at = $2
          WHERE response_id = $1
-         RETURNING response_id, request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at"
+         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(response_id)
     .bind(Utc::now())
