@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use validator::Validate;
+use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct EstimateResponse {
@@ -9,8 +10,8 @@ pub struct EstimateResponse {
     pub request_id: i32,
     pub vendor_id: Option<i32>,
     pub estimate_number: Option<String>,
-    pub estimate_price: Option<f64>,
-    pub total_amount: Option<f64>,
+    pub estimate_price: Option<Decimal>,
+    pub total_amount: Option<Decimal>,
     pub breakdown: Option<serde_json::Value>,
     pub delivery_date: Option<chrono::NaiveDate>,
     pub validity_period: Option<String>,
@@ -29,8 +30,8 @@ pub struct CreateEstimateResponseRequest {
     pub vendor_id: Option<i32>,
     #[validate(length(max = 50))]
     pub estimate_number: Option<String>,
-    pub estimate_price: Option<f64>,
-    pub total_amount: Option<f64>,
+    pub estimate_price: Option<Decimal>,
+    pub total_amount: Option<Decimal>,
     pub breakdown: Option<serde_json::Value>,
     pub delivery_date: Option<String>,
     pub validity_period: Option<String>,
@@ -46,8 +47,8 @@ pub struct UpdateEstimateResponseRequest {
     pub vendor_id: Option<i32>,
     #[validate(length(max = 50))]
     pub estimate_number: Option<String>,
-    pub estimate_price: Option<f64>,
-    pub total_amount: Option<f64>,
+    pub estimate_price: Option<Decimal>,
+    pub total_amount: Option<Decimal>,
     pub breakdown: Option<serde_json::Value>,
     pub delivery_date: Option<String>,
     pub validity_period: Option<String>,

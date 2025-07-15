@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, FileText, X } from "lucide-react";
 
 interface EstimateRequest {
@@ -56,16 +55,36 @@ export default function NewResponsePage() {
   });
 
   useEffect(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const futureDate = new Date(today);
+    futureDate.setMonth(futureDate.getMonth() + 2);
+    const futureDateStr = futureDate.toISOString().split('T')[0];
+    
+    setFormData(prev => ({
+      ...prev,
+      response_date: todayStr,
+      delivery_date: futureDateStr,
+      estimate_number: "EST-2025-001",
+      estimate_price: "1500000",
+      total_amount: "1650000",
+      validity_period: "30日間",
+      terms_conditions: "支払い条件：納品後30日以内\n保証期間：1年間\n変更要求：仕様変更は別途見積もり",
+      response_remarks: "技術スタック：React, Node.js, PostgreSQL\n開発期間：約3ヶ月\nチーム構成：フロントエンド2名、バックエンド2名"
+    }));
+  }, []);
+
+  useEffect(() => {
     fetchApprovedRequests();
     fetchVendors();
   }, []);
 
   const fetchApprovedRequests = async () => {
     try {
-      const response = await fetch("/api/requests/approved");
+      const response = await fetch("http://localhost:8000/api/requests/approved");
       if (response.ok) {
-        const data = await response.json();
-        setApprovedRequests(data);
+        const apiResponse = await response.json();
+        setApprovedRequests(apiResponse.data || []);
       } else {
         setError("承認済み見積依頼の取得に失敗しました");
       }
@@ -76,10 +95,10 @@ export default function NewResponsePage() {
 
   const fetchVendors = async () => {
     try {
-      const response = await fetch("/api/users?user_type=VENDOR");
+      const response = await fetch("http://localhost:8000/api/users?user_type=VENDOR");
       if (response.ok) {
-        const data = await response.json();
-        setVendors(data);
+        const apiResponse = await response.json();
+        setVendors(apiResponse.data || []);
       } else {
         setError("ベンダー情報の取得に失敗しました");
       }
@@ -106,7 +125,7 @@ export default function NewResponsePage() {
       formData.append("target_id", "0");
 
       try {
-        const response = await fetch("/api/files/upload", {
+        const response = await fetch("http://localhost:8000/api/files/upload", {
           method: "POST",
           body: formData,
         });
@@ -133,7 +152,7 @@ export default function NewResponsePage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/responses", {
+      const response = await fetch("http://localhost:8000/api/responses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -171,9 +190,9 @@ export default function NewResponsePage() {
         </div>
 
         {error && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
-          </Alert>
+          <div className="mb-6 p-4 border border-red-200 bg-red-50 rounded-md">
+            <p className="text-red-800">{error}</p>
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -392,7 +411,7 @@ export default function NewResponsePage() {
                             onChange={handleFileUpload}
                           />
                         </label>
-                        <p className="pl-1">またはドラッグ&ドロップ</p>
+                        <p className="pl-1">またはドラッグ&amp;ドロップ</p>
                       </div>
                       <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
                     </div>

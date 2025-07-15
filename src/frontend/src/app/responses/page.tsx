@@ -35,10 +35,10 @@ export default function ResponsesPage() {
 
   const fetchResponses = async () => {
     try {
-      const response = await fetch("/api/responses");
+      const response = await fetch("http://localhost:8000/api/responses");
       if (response.ok) {
-        const data = await response.json();
-        setResponses(data);
+        const apiResponse = await response.json();
+        setResponses(apiResponse.data || []);
       } else {
         setError("見積回答の取得に失敗しました");
       }
