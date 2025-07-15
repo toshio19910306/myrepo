@@ -52,12 +52,17 @@ CREATE TABLE estimate_responses (
     response_id SERIAL PRIMARY KEY,
     request_id INTEGER REFERENCES estimate_requests(request_id),
     vendor_id INTEGER REFERENCES users(user_id),
+    estimate_number VARCHAR(50),
+    estimate_price DECIMAL(15,2),
     total_amount DECIMAL(15,2) NOT NULL,
     breakdown TEXT,
     delivery_date TIMESTAMP WITH TIME ZONE NOT NULL,
     validity_period INTEGER NOT NULL, -- days
-    notes TEXT,
+    terms_conditions TEXT,
+    response_remarks TEXT,
+    response_date TIMESTAMP WITH TIME ZONE,
     status VARCHAR(20) DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED')),
+    created_by INTEGER REFERENCES users(user_id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

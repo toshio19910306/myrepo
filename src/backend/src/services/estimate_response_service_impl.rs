@@ -1,6 +1,7 @@
 use anyhow::Result;
-use chrono::Utc;
+use chrono::{Utc, NaiveDate};
 use sqlx::{PgPool, Row};
+use uuid::Uuid;
 
 use crate::models::{EstimateResponse, CreateEstimateResponseRequest, UpdateEstimateResponseRequest};
 
@@ -8,7 +9,7 @@ pub async fn get_all_responses(pool: &PgPool, page: i32, per_page: i32) -> Resul
     let offset = (page - 1) * per_page;
     
     let responses = sqlx::query_as::<_, EstimateResponse>(
-        "SELECT response_id, request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at 
+        "SELECT response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
          FROM estimate_responses 
          ORDER BY created_at DESC 
          LIMIT $1 OFFSET $2"
@@ -23,7 +24,7 @@ pub async fn get_all_responses(pool: &PgPool, page: i32, per_page: i32) -> Resul
 
 pub async fn get_response_by_id(pool: &PgPool, response_id: i32) -> Result<Option<EstimateResponse>> {
     let response = sqlx::query_as::<_, EstimateResponse>(
-        "SELECT response_id, request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at 
+        "SELECT response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
          FROM estimate_responses 
          WHERE response_id = $1"
     )
@@ -35,22 +36,41 @@ pub async fn get_response_by_id(pool: &PgPool, response_id: i32) -> Result<Optio
 }
 
 pub async fn create_response(pool: &PgPool, request: CreateEstimateResponseRequest) -> Result<EstimateResponse> {
+    let delivery_date = if let Ok(date) = NaiveDate::parse_from_str(&request.delivery_date, "%Y-%m-%d") {
+        Some(date)
+    } else {
+        return Err(anyhow::anyhow!("Invalid delivery_date format: {}", request.delivery_date));
+    };
+
     let estimate_response = sqlx::query_as::<_, EstimateResponse>(
-        "INSERT INTO estimate_responses (request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $9)
-         RETURNING response_id, request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, terms_conditions, status, created_by, created_at, updated_at"
+        "INSERT INTO estimate_responses (request_id, vendor_id, total_amount, breakdown, delivery_date, validity_period, response_remarks, status, created_by, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'DRAFT', 1, $8, $8)
+         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(request.request_id)
-    .bind(request.vendor_id)
-    .bind(&request.total_amount)
-    .bind(&serde_json::to_string(&request.breakdown)?)
-    .bind(&request.delivery_date)
-    .bind(&request.validity_period)
-    .bind(&request.terms_conditions)
-    .bind(request.created_by)
+    .bind(Some(request.vendor_id))
+    .bind(Some(request.total_amount))
+    .bind(&request.breakdown)
+    .bind(delivery_date)
+    .bind(Some(request.validity_period))
+    .bind(&request.notes)
     .bind(Utc::now())
     .fetch_one(pool)
     .await?;
+
+    if let Some(attachment_ids) = request.attachment_ids {
+        for file_id in attachment_ids {
+            if let Ok(uuid) = Uuid::parse_str(&file_id) {
+                let _ = sqlx::query(
+                    "UPDATE attached_files SET target_type = 'RESPONSE', target_id = $1 WHERE file_id = $2"
+                )
+                .bind(estimate_response.response_id)
+                .bind(uuid)
+                .execute(pool)
+                .await;
+            }
+        }
+    }
 
     Ok(estimate_response)
 }
