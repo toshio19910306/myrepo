@@ -75,60 +75,60 @@ export default function EditResponsePage() {
   });
 
   useEffect(() => {
+    const fetchResponse = async () => {
+      try {
+        const response = await fetch(`/api/responses/${responseId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setResponse(data);
+          setFormData({
+            request_id: data.request_id?.toString() || "",
+            vendor_id: data.vendor_id?.toString() || "",
+            estimate_number: data.estimate_number || "",
+            estimate_price: data.estimate_price?.toString() || "",
+            total_amount: data.total_amount?.toString() || "",
+            delivery_date: data.delivery_date || "",
+            validity_period: data.validity_period || "",
+            terms_conditions: data.terms_conditions || "",
+            response_remarks: data.response_remarks || "",
+            response_date: data.response_date || "",
+          });
+        } else {
+          setError("見積回答の取得に失敗しました");
+        }
+      } catch {
+        setError("見積回答の取得中にエラーが発生しました");
+      }
+    };
+
+    const fetchApprovedRequests = async () => {
+      try {
+        const response = await fetch("/api/requests/approved");
+        if (response.ok) {
+          const data = await response.json();
+          setApprovedRequests(data);
+        }
+      } catch {
+        console.error("承認済み見積依頼の取得に失敗しました");
+      }
+    };
+
+    const fetchVendors = async () => {
+      try {
+        const response = await fetch("/api/users?user_type=VENDOR");
+        if (response.ok) {
+          const data = await response.json();
+          setVendors(data);
+        }
+      } catch {
+        console.error("ベンダー情報の取得に失敗しました");
+      }
+    };
+
     fetchResponse();
     fetchApprovedRequests();
     fetchVendors();
   }, [responseId]);
-
-  const fetchResponse = async () => {
-    try {
-      const response = await fetch(`/api/responses/${responseId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setResponse(data);
-        setFormData({
-          request_id: data.request_id?.toString() || "",
-          vendor_id: data.vendor_id?.toString() || "",
-          estimate_number: data.estimate_number || "",
-          estimate_price: data.estimate_price?.toString() || "",
-          total_amount: data.total_amount?.toString() || "",
-          delivery_date: data.delivery_date || "",
-          validity_period: data.validity_period || "",
-          terms_conditions: data.terms_conditions || "",
-          response_remarks: data.response_remarks || "",
-          response_date: data.response_date || "",
-        });
-      } else {
-        setError("見積回答の取得に失敗しました");
-      }
-    } catch (err) {
-      setError("見積回答の取得中にエラーが発生しました");
-    }
-  };
-
-  const fetchApprovedRequests = async () => {
-    try {
-      const response = await fetch("/api/requests/approved");
-      if (response.ok) {
-        const data = await response.json();
-        setApprovedRequests(data);
-      }
-    } catch (err) {
-      console.error("承認済み見積依頼の取得に失敗しました");
-    }
-  };
-
-  const fetchVendors = async () => {
-    try {
-      const response = await fetch("/api/users?user_type=VENDOR");
-      if (response.ok) {
-        const data = await response.json();
-        setVendors(data);
-      }
-    } catch (err) {
-      console.error("ベンダー情報の取得に失敗しました");
-    }
-  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -159,7 +159,7 @@ export default function EditResponsePage() {
         } else {
           setError("ファイルのアップロードに失敗しました");
         }
-      } catch (err) {
+      } catch {
         setError("ファイルのアップロード中にエラーが発生しました");
       }
     }
@@ -195,7 +195,7 @@ export default function EditResponsePage() {
         const errorData = await response.json();
         setError(errorData.message || "見積回答の更新に失敗しました");
       }
-    } catch (err) {
+    } catch {
       setError("見積回答の更新中にエラーが発生しました");
     } finally {
       setIsLoading(false);

@@ -88,7 +88,7 @@ export default function NewResponsePage() {
       } else {
         setError("承認済み見積依頼の取得に失敗しました");
       }
-    } catch (err) {
+    } catch {
       setError("承認済み見積依頼の取得中にエラーが発生しました");
     }
   };
@@ -102,7 +102,7 @@ export default function NewResponsePage() {
       } else {
         setError("ベンダー情報の取得に失敗しました");
       }
-    } catch (err) {
+    } catch {
       setError("ベンダー情報の取得中にエラーが発生しました");
     }
   };
@@ -136,7 +136,7 @@ export default function NewResponsePage() {
         } else {
           setError("ファイルのアップロードに失敗しました");
         }
-      } catch (err) {
+      } catch {
         setError("ファイルのアップロード中にエラーが発生しました");
       }
     }
@@ -174,7 +174,7 @@ export default function NewResponsePage() {
         const errorData = await response.json();
         setError(errorData.message || "見積回答の作成に失敗しました");
       }
-    } catch (err) {
+    } catch {
       setError("見積回答の作成中にエラーが発生しました");
     } finally {
       setIsLoading(false);

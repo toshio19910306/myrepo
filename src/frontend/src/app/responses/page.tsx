@@ -42,7 +42,7 @@ export default function ResponsesPage() {
       } else {
         setError("見積回答の取得に失敗しました");
       }
-    } catch (err) {
+    } catch {
       setError("見積回答の取得中にエラーが発生しました");
     } finally {
       setIsLoading(false);
