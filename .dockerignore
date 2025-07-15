@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.next
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+target
+.env
+.env.local
+.env.production.local
+.env.development.local
+*.log
+deploy
