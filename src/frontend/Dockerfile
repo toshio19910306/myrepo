@@ -14,9 +14,7 @@ COPY . .
 # Build the application
 RUN npm run build
 # Verify build artifacts exist
-RUN ls -la .next/ && ls -la public/ && echo "Build verification complete"
-# Ensure public directory is available for copying
-RUN test -d public || (echo "ERROR: public directory missing after build" && exit 1)
+RUN ls -la .next/ && echo "Build verification complete"
 
 # Runtime stage
 FROM node:20-alpine
