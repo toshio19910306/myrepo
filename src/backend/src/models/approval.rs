@@ -9,7 +9,6 @@ pub struct ApprovalFlow {
     pub target_type: String,
     pub target_id: i32,
     pub current_step: i32,
-    pub total_steps: i32,
     pub status: String,
     pub created_by: i32,
     pub created_at: DateTime<Utc>,

@@ -106,7 +106,18 @@ CREATE INDEX idx_estimate_requests_status ON estimate_requests(status);
 CREATE INDEX idx_estimate_responses_request_id ON estimate_responses(request_id);
 CREATE INDEX idx_estimate_responses_vendor_id ON estimate_responses(vendor_id);
 CREATE INDEX idx_approval_flows_target ON approval_flows(target_type, target_id);
+CREATE TABLE approval_history (
+    history_id SERIAL PRIMARY KEY,
+    flow_id INTEGER REFERENCES approval_flows(flow_id),
+    step_number INTEGER NOT NULL,
+    approver_id INTEGER REFERENCES users(user_id),
+    action VARCHAR(20) NOT NULL,
+    comments TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_approval_steps_flow_id ON approval_steps(flow_id);
+CREATE INDEX idx_approval_history_flow_id ON approval_history(flow_id);
 CREATE INDEX idx_attached_files_target ON attached_files(target_type, target_id);
 
 INSERT INTO users (username, email, password_hash, full_name, department, position, user_type, is_active)

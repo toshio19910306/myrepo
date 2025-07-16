@@ -9,22 +9,36 @@ pub async fn create_approval_flow(
     pool: &PgPool,
     request: CreateApprovalFlowRequest,
 ) -> Result<ApprovalFlow> {
-    let approval_flow = sqlx::query_as::<_, ApprovalFlow>(
+    println!("About to insert approval flow");
+    let query = sqlx::query_as::<_, ApprovalFlow>(
         "INSERT INTO approval_flows (target_type, target_id, current_step, status, created_by, created_at, updated_at)
-         VALUES ($1, $2, 1, 'pending', $3, $4, $4)
+         VALUES ($1, $2, 1, 'PENDING', $3, $4, $4)
          RETURNING flow_id, target_type, target_id, current_step, status, created_by, created_at, updated_at"
     )
     .bind(&request.target_type)
     .bind(request.target_id)
     .bind(request.created_by)
-    .bind(Utc::now())
-    .fetch_one(pool)
-    .await?;
-
+    .bind(Utc::now());
+    
+    println!("Query prepared, about to execute fetch_one");
+    let approval_flow = match query.fetch_one(pool).await {
+        Ok(flow) => {
+            println!("fetch_one completed successfully, flow_id: {}", flow.flow_id);
+            flow
+        },
+        Err(e) => {
+            println!("fetch_one failed with error: {:?}", e);
+            return Err(e.into());
+        }
+    };
+    
+    println!("Successfully inserted approval flow with ID: {}", approval_flow.flow_id);
+    println!("Creating approval steps for {} approvers", request.approver_ids.len());
     for (index, approver_id) in request.approver_ids.iter().enumerate() {
+        println!("Inserting approval step {} for approver {}", index + 1, approver_id);
         sqlx::query(
-            "INSERT INTO approval_steps (flow_id, step_number, approver_id, status, created_at)
-             VALUES ($1, $2, $3, 'pending', $4)"
+            "INSERT INTO approval_steps (flow_id, step_order, approver_id, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $4)"
         )
         .bind(approval_flow.flow_id)
         .bind((index + 1) as i32)
@@ -32,7 +46,9 @@ pub async fn create_approval_flow(
         .bind(Utc::now())
         .execute(pool)
         .await?;
+        println!("Successfully inserted approval step {} for approver {}", index + 1, approver_id);
     }
+    println!("All approval steps created successfully");
 
     Ok(approval_flow)
 }
@@ -46,9 +62,10 @@ pub async fn process_approval_action(
     let mut tx = pool.begin().await?;
 
     let current_step = sqlx::query_as::<_, ApprovalStep>(
-        "SELECT step_id, flow_id, step_number, approver_id, status, comments, created_at, updated_at
+        "SELECT step_id, flow_id, step_order as step_number, approver_id, 
+                COALESCE(action_type, 'PENDING') as status, comments, created_at, updated_at
          FROM approval_steps 
-         WHERE flow_id = $1 AND step_number = (
+         WHERE flow_id = $1 AND step_order = (
              SELECT current_step FROM approval_flows WHERE flow_id = $1
          )"
     )
@@ -62,11 +79,12 @@ pub async fn process_approval_action(
 
     sqlx::query(
         "UPDATE approval_steps 
-         SET status = $1, comments = $2, updated_at = $3
-         WHERE step_id = $4"
+         SET action_type = $1, comments = $2, approved_at = $3, updated_at = $4
+         WHERE step_id = $5"
     )
-    .bind(&request.action)
+    .bind(&request.action.to_uppercase())
     .bind(&request.comments)
+    .bind(Utc::now())
     .bind(Utc::now())
     .bind(current_step.step_id)
     .execute(&mut *tx)
@@ -87,9 +105,9 @@ pub async fn process_approval_action(
 
     let approval_flow = if request.action == "approved" {
         let next_step = sqlx::query_scalar::<_, Option<i32>>(
-            "SELECT step_number FROM approval_steps 
-             WHERE flow_id = $1 AND step_number > $2 AND status = 'pending'
-             ORDER BY step_number LIMIT 1"
+            "SELECT step_order FROM approval_steps 
+             WHERE flow_id = $1 AND step_order > $2 AND action_type IS NULL
+             ORDER BY step_order LIMIT 1"
         )
         .bind(flow_id)
         .bind(current_step.step_number)
