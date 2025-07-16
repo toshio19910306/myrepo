@@ -93,6 +93,8 @@ export default function RequestsPage() {
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [selectedApprovers, setSelectedApprovers] = useState<number[]>([]);
   const [approvalRequestId, setApprovalRequestId] = useState<number | null>(null);
+  const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRequests();
@@ -522,11 +524,15 @@ export default function RequestsPage() {
   const handleApprovalRequest = (requestId: number) => {
     setApprovalRequestId(requestId);
     setSelectedApprovers([]);
+    setApprovalError(null);
     setIsApprovalModalOpen(true);
   };
 
   const handleSubmitApproval = async () => {
     if (!approvalRequestId || selectedApprovers.length === 0) return;
+
+    setIsSubmittingApproval(true);
+    setApprovalError(null);
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/approvals`, {
@@ -543,7 +549,7 @@ export default function RequestsPage() {
       });
 
       if (response.ok) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${approvalRequestId}`, {
+        const statusResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${approvalRequestId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -553,16 +559,24 @@ export default function RequestsPage() {
           }),
         });
 
-        await fetchRequests();
-        setIsApprovalModalOpen(false);
-        setApprovalRequestId(null);
-        setSelectedApprovers([]);
+        if (statusResponse.ok) {
+          await fetchRequests();
+          setIsApprovalModalOpen(false);
+          setApprovalRequestId(null);
+          setSelectedApprovers([]);
+          setError(null);
+        } else {
+          setApprovalError('ステータス更新に失敗しました');
+        }
       } else {
-        setError('承認申請に失敗しました');
+        const errorData = await response.json().catch(() => ({}));
+        setApprovalError(errorData.message || '承認申請に失敗しました');
       }
     } catch (error) {
       console.error('Error submitting approval request:', error);
-      setError('承認申請に失敗しました');
+      setApprovalError('ネットワークエラーが発生しました。再度お試しください。');
+    } finally {
+      setIsSubmittingApproval(false);
     }
   };
 
@@ -1036,6 +1050,12 @@ export default function RequestsPage() {
                   承認者を選択してください（複数選択可能）
                 </p>
                 
+                {approvalError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-600">{approvalError}</p>
+                  </div>
+                )}
+                
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {users.map((user) => (
                     <div 
@@ -1084,10 +1104,17 @@ export default function RequestsPage() {
                 </Button>
                 <Button 
                   onClick={handleSubmitApproval}
-                  disabled={selectedApprovers.length === 0}
+                  disabled={selectedApprovers.length === 0 || isSubmittingApproval}
                   className="bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300"
                 >
-                  承認申請を送信 ({selectedApprovers.length}名選択)
+                  {isSubmittingApproval ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      送信中...
+                    </>
+                  ) : (
+                    `承認申請を送信 (${selectedApprovers.length}名選択)`
+                  )}
                 </Button>
               </div>
             </div>
