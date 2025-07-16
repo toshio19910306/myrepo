@@ -4,10 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Clock, FileText, User, Calendar, DollarSign, Settings } from "lucide-react";
+import { FileText } from "lucide-react";
 
 interface ApprovalItem {
   id: string;
@@ -23,15 +20,16 @@ interface ApprovalItem {
   submitted_date: string;
   due_date: string;
   amount: string;
+  history: Array<{step: number, action: string, user: string, date: string, status: string}>;
 }
 
 export default function ApprovalsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApprovals, setSelectedApprovals] = useState<string[]>([]);
-  const [showSettings, setShowSettings] = useState(false);
-  const [autoApprovalEnabled, setAutoApprovalEnabled] = useState(false);
-  const [approvalThreshold, setApprovalThreshold] = useState(1000000);
-  const [notificationEnabled, setNotificationEnabled] = useState(true);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null);
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -222,10 +220,12 @@ export default function ApprovalsPage() {
 
   const displayApprovals = approvals.length > 0 ? approvals : mockApprovals;
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filteredApprovals = displayApprovals.filter((approval: any) =>
     approval.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     approval.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (approval.request_id || approval.requestId || approval.id || '').toLowerCase().includes(searchTerm.toLowerCase())
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((approval as any).request_id || (approval as any).requestId || approval.id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status: string) => {
@@ -298,146 +298,150 @@ export default function ApprovalsPage() {
                 <p className="text-gray-500">読み込み中...</p>
               </CardContent>
             </Card>
-          ) : filteredApprovals.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <FileText className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">承認待ちの項目がありません</h3>
-                <p className="text-gray-500 text-center">
-                  現在承認待ちの見積依頼や仕様書はありません。
-                </p>
-              </CardContent>
-            </Card>
           ) : (
-            filteredApprovals.map((approval: ApprovalItem) => (
-            <Card key={approval.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedApprovals.includes(approval.id)}
-                      onChange={() => handleApprovalSelection(approval.id)}
-                      className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
+            filteredApprovals.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <FileText className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">承認待ちの項目がありません</h3>
+                  <p className="text-gray-500 text-center">
+                    現在承認待ちの見積依頼や仕様書はありません。
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              filteredApprovals.map((approval: any) => (
+              <Card key={approval.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedApprovals.includes(approval.id)}
+                        onChange={() => handleApprovalSelection(approval.id)}
+                        className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <div>
+                        <CardTitle className="text-lg">{approval.title}</CardTitle>
+                        <CardDescription className="mt-1">
+                          {approval.id} • {approval.type} • 申請者: {approval.requester} ({approval.department})
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(approval.status)}`}>
+                      {approval.status}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div>
-                      <CardTitle className="text-lg">{approval.title}</CardTitle>
-                      <CardDescription className="mt-1">
-                        {approval.id} • {approval.type} • 申請者: {approval.requester} ({approval.department})
-                      </CardDescription>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">金額</h4>
+                      <p className="text-sm font-medium">{approval.amount}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">申請日</h4>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      <p className="text-sm">{(approval as any).submitted_date || (approval as any).submittedDate}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">期限</h4>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      <p className="text-sm">{(approval as any).due_date || (approval as any).dueDate}</p>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(approval.status)}`}>
-                    {approval.status}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">金額</h4>
-                    <p className="text-sm font-medium">{approval.amount}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">申請日</h4>
-                    <p className="text-sm">{approval.submitted_date || approval.submittedDate}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">期限</h4>
-                    <p className="text-sm">{approval.due_date || approval.dueDate}</p>
-                  </div>
-                </div>
 
-                <div className="mb-6">
-                  <h4 className="font-medium text-sm text-muted-foreground mb-3">承認フロー進捗</h4>
-                  <div className="flex items-center space-x-4">
-                    {approval.history.map((step, index) => (
-                      <div key={index} className="flex items-center">
-                        <div className="flex flex-col items-center">
-                          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-medium ${
-                            step.status === "完了" ? "bg-green-100 border-green-500 text-green-700" :
-                            step.status === "待機中" ? "bg-yellow-100 border-yellow-500 text-yellow-700" :
-                            "bg-gray-100 border-gray-300 text-gray-500"
-                          }`}>
-                            {step.step}
-                          </div>
-                          <div className="mt-1 text-xs text-center">
-                            <div className={`font-medium ${getStepStatusColor(step.status)}`}>
-                              {step.action}
+                  {approval.history && (
+                    <div className="mb-6">
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3">承認フロー進捗</h4>
+                      <div className="flex items-center space-x-4">
+                        {approval.history.map((step: {step: number, action: string, user: string, date: string, status: string}, index: number) => (
+                          <div key={index} className="flex items-center">
+                            <div className="flex flex-col items-center">
+                              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-medium ${
+                                step.status === "完了" ? "bg-green-100 border-green-500 text-green-700" :
+                                step.status === "待機中" ? "bg-yellow-100 border-yellow-500 text-yellow-700" :
+                                "bg-gray-100 border-gray-300 text-gray-500"
+                              }`}>
+                                {step.step}
+                              </div>
+                              <div className="mt-1 text-xs text-center">
+                                <div className={`font-medium ${getStepStatusColor(step.status)}`}>
+                                  {step.action}
+                                </div>
+                                <div className="text-muted-foreground">{step.user}</div>
+                                {step.date !== "-" && (
+                                  <div className="text-muted-foreground">{step.date}</div>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-muted-foreground">{step.user}</div>
-                            {step.date !== "-" && (
-                              <div className="text-muted-foreground">{step.date}</div>
+                            {index < approval.history.length - 1 && (
+                              <div className={`w-8 h-0.5 ${
+                                step.status === "完了" ? "bg-green-300" : "bg-gray-300"
+                              }`}></div>
                             )}
                           </div>
-                        </div>
-                        {index < approval.history.length - 1 && (
-                          <div className={`w-8 h-0.5 ${
-                            step.status === "完了" ? "bg-green-300" : "bg-gray-300"
-                          }`}></div>
-                        )}
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  )}
 
-                <div className="flex justify-between items-center pt-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    進捗: {approval.current_step || approval.currentStep}/{approval.total_steps || approval.totalSteps} • 
-                    現在の承認者: {approval.current_approver || approval.currentApprover}
+                  <div className="flex justify-between items-center pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      進捗: {(approval as any).current_step || (approval as any).currentStep}/{(approval as any).total_steps || (approval as any).totalSteps} • 
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      現在の承認者: {(approval as any).current_approver || (approval as any).currentApprover}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedApproval(approval);
+                          setShowDetailModal(true);
+                        }}
+                      >
+                        詳細表示
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedApproval(approval);
+                          setShowHistoryModal(true);
+                        }}
+                      >
+                        履歴表示
+                      </Button>
+                      {approval.status === "承認待ち" && (
+                        <>
+                          <Button 
+                            size="sm" 
+                            className="bg-primary hover:bg-primary/90"
+                            onClick={() => handleApprove(approval.id)}
+                          >
+                            承認
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleReject(approval.id)}
+                          >
+                            差し戻し
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedApproval(approval);
-                        setShowDetailModal(true);
-                      }}
-                    >
-                      詳細表示
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedApproval(approval);
-                        setShowHistoryModal(true);
-                      }}
-                    >
-                      履歴表示
-                    </Button>
-                    {approval.status === "承認待ち" && (
-                      <>
-                        <Button 
-                          size="sm" 
-                          className="bg-primary hover:bg-primary/90"
-                          onClick={() => handleApprove(approval.id)}
-                        >
-                          承認
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => handleReject(approval.id)}
-                        >
-                          差し戻し
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+              ))
+            )
+          )}
         </div>
-
-        {filteredApprovals.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">検索条件に一致する承認案件が見つかりません。</p>
-          </div>
-        )}
       </div>
 
       {showDetailModal && selectedApproval && (
