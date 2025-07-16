@@ -63,15 +63,15 @@ export default function ApprovalsPage() {
       id: "APP-001",
       type: "見積依頼",
       title: "新システム開発見積依頼",
-      requestId: "REQ-001",
+      request_id: "REQ-001",
       requester: "山田主任",
       department: "IT部",
-      currentStep: 2,
-      totalSteps: 3,
-      currentApprover: "田中部長",
+      current_step: 2,
+      total_steps: 3,
+      current_approver: "田中部長",
       status: "承認待ち",
-      submittedDate: "2025-06-25",
-      dueDate: "2025-06-30",
+      submitted_date: "2025-06-25",
+      due_date: "2025-06-30",
       amount: "5,000,000円",
       history: [
         { step: 1, action: "申請", user: "山田主任", date: "2025-06-25 16:45", status: "完了" },
@@ -83,15 +83,15 @@ export default function ApprovalsPage() {
       id: "APP-002",
       type: "見積回答",
       title: "インフラ構築見積回答",
-      requestId: "RES-002",
+      request_id: "RES-002",
       requester: "佐藤課長",
       department: "IT部",
-      currentStep: 1,
-      totalSteps: 2,
-      currentApprover: "田中部長",
+      current_step: 1,
+      total_steps: 2,
+      current_approver: "田中部長",
       status: "承認待ち",
-      submittedDate: "2025-06-26",
-      dueDate: "2025-07-01",
+      submitted_date: "2025-06-26",
+      due_date: "2025-07-01",
       amount: "2,900,000円",
       history: [
         { step: 1, action: "申請", user: "佐藤課長", date: "2025-06-26 14:30", status: "完了" },
@@ -102,15 +102,15 @@ export default function ApprovalsPage() {
       id: "APP-003",
       type: "仕様書",
       title: "セキュリティ監査仕様書",
-      requestId: "SPEC-003",
+      request_id: "SPEC-003",
       requester: "鈴木係長",
       department: "IT部",
-      currentStep: 3,
-      totalSteps: 3,
-      currentApprover: "-",
+      current_step: 3,
+      total_steps: 3,
+      current_approver: "-",
       status: "承認済み",
-      submittedDate: "2025-06-24",
-      dueDate: "2025-06-29",
+      submitted_date: "2025-06-24",
+      due_date: "2025-06-29",
       amount: "1,200,000円",
       history: [
         { step: 1, action: "申請", user: "鈴木係長", date: "2025-06-24 10:00", status: "完了" },
@@ -220,12 +220,10 @@ export default function ApprovalsPage() {
 
   const displayApprovals = approvals.length > 0 ? approvals : mockApprovals;
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filteredApprovals = displayApprovals.filter((approval: any) =>
+  const filteredApprovals = displayApprovals.filter((approval) =>
     approval.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     approval.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((approval as any).request_id || (approval as any).requestId || approval.id || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (approval.request_id?.toString() || approval.id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status: string) => {
@@ -310,8 +308,7 @@ export default function ApprovalsPage() {
                 </CardContent>
               </Card>
             ) : (
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              filteredApprovals.map((approval: any) => (
+              filteredApprovals.map((approval) => (
               <Card key={approval.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
@@ -342,13 +339,11 @@ export default function ApprovalsPage() {
                     </div>
                     <div>
                       <h4 className="font-medium text-sm text-muted-foreground mb-1">申請日</h4>
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                      <p className="text-sm">{(approval as any).submitted_date || (approval as any).submittedDate}</p>
+                      <p className="text-sm">{approval.submitted_date}</p>
                     </div>
                     <div>
                       <h4 className="font-medium text-sm text-muted-foreground mb-1">期限</h4>
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                      <p className="text-sm">{(approval as any).due_date || (approval as any).dueDate}</p>
+                      <p className="text-sm">{approval.due_date}</p>
                     </div>
                   </div>
 
@@ -389,10 +384,8 @@ export default function ApprovalsPage() {
 
                   <div className="flex justify-between items-center pt-4 border-t">
                     <div className="text-sm text-muted-foreground">
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                      進捗: {(approval as any).current_step || (approval as any).currentStep}/{(approval as any).total_steps || (approval as any).totalSteps} • 
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                      現在の承認者: {(approval as any).current_approver || (approval as any).currentApprover}
+                      進捗: {approval.current_step}/{approval.total_steps} • 
+                      現在の承認者: {approval.current_approver}
                     </div>
                     <div className="flex gap-2">
                       <Button 
