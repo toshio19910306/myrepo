@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Upload, X, Trash2, Download, FileText } from "lucide-react";
+import { Upload, X, Trash2, Download, FileText, Users } from "lucide-react";
 
 interface EstimateRequest {
   request_id: number;
@@ -57,6 +57,18 @@ interface AttachedFile {
   uploaded_at: string;
 }
 
+interface User {
+  user_id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  department?: string;
+  position?: string;
+  user_type: string;
+  company_name?: string;
+  is_active: boolean;
+}
+
 export default function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -77,10 +89,15 @@ export default function RequestsPage() {
     specId: ""
   });
   const [specifications, setSpecifications] = useState<Specification[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [selectedApprovers, setSelectedApprovers] = useState<number[]>([]);
+  const [approvalRequestId, setApprovalRequestId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchRequests();
     fetchSpecifications();
+    fetchUsers();
   }, []);
 
   const fetchRequests = async () => {
@@ -125,22 +142,22 @@ export default function RequestsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "approved": return "text-green-600 bg-green-50";
-      case "submitted": return "text-yellow-600 bg-yellow-50";
-      case "in_review": return "text-blue-600 bg-blue-50";
-      case "draft": return "text-gray-600 bg-gray-50";
-      case "rejected": return "text-red-600 bg-red-50";
-      default: return "text-gray-600 bg-gray-50";
+      case "DRAFT": return "bg-gray-100 text-gray-800";
+      case "SUBMITTED": return "bg-blue-100 text-blue-800";
+      case "PENDING_APPROVAL": return "bg-yellow-100 text-yellow-800";
+      case "RESPONDED": return "bg-green-100 text-green-800";
+      case "CLOSED": return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "APPROVED": return "承認済み";
-      case "SUBMITTED": return "提出済み";
-      case "IN_REVIEW": return "審査中";
       case "DRAFT": return "下書き";
-      case "REJECTED": return "却下";
+      case "SUBMITTED": return "提出済み";
+      case "PENDING_APPROVAL": return "承認待ち";
+      case "RESPONDED": return "回答済み";
+      case "CLOSED": return "終了";
       default: return status;
     }
   };
@@ -488,6 +505,75 @@ export default function RequestsPage() {
     setDeletingRequestId(null);
   };
 
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`);
+      if (response.ok) {
+        const apiResponse = await response.json();
+        if (apiResponse.success && Array.isArray(apiResponse.data)) {
+          setUsers(apiResponse.data.filter((user: User) => user.is_active));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    }
+  };
+
+  const handleApprovalRequest = (requestId: number) => {
+    setApprovalRequestId(requestId);
+    setSelectedApprovers([]);
+    setIsApprovalModalOpen(true);
+  };
+
+  const handleSubmitApproval = async () => {
+    if (!approvalRequestId || selectedApprovers.length === 0) return;
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/approvals`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          target_type: 'REQUEST',
+          target_id: approvalRequestId,
+          approver_ids: selectedApprovers,
+          created_by: 1
+        }),
+      });
+
+      if (response.ok) {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${approvalRequestId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'PENDING_APPROVAL'
+          }),
+        });
+
+        await fetchRequests();
+        setIsApprovalModalOpen(false);
+        setApprovalRequestId(null);
+        setSelectedApprovers([]);
+      } else {
+        setError('承認申請に失敗しました');
+      }
+    } catch (error) {
+      console.error('Error submitting approval request:', error);
+      setError('承認申請に失敗しました');
+    }
+  };
+
+  const toggleApproverSelection = (userId: number) => {
+    setSelectedApprovers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto">
@@ -582,6 +668,15 @@ export default function RequestsPage() {
                       >
                         編集
                       </Button>
+                      {request.status === "DRAFT" && (
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                          onClick={() => handleApprovalRequest(request.request_id)}
+                        >
+                          承認申請
+                        </Button>
+                      )}
                       {request.status === "DRAFT" && (
                         <Button 
                           variant="outline" 
@@ -908,6 +1003,91 @@ export default function RequestsPage() {
                   className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   削除
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Approval Request Modal */}
+        {isApprovalModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <Users className="mr-2 h-5 w-5" />
+                  承認者選択
+                </h3>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setIsApprovalModalOpen(false);
+                    setApprovalRequestId(null);
+                    setSelectedApprovers([]);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  承認者を選択してください（複数選択可能）
+                </p>
+                
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {users.map((user) => (
+                    <div 
+                      key={user.user_id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedApprovers.includes(user.user_id)
+                          ? 'bg-blue-50 border-blue-300'
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                      }`}
+                      onClick={() => toggleApproverSelection(user.user_id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{user.full_name}</div>
+                          <div className="text-sm text-gray-500">
+                            {user.department && `${user.department} `}
+                            {user.position && `- ${user.position}`}
+                          </div>
+                          <div className="text-xs text-gray-400">{user.email}</div>
+                        </div>
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          selectedApprovers.includes(user.user_id)
+                            ? 'bg-blue-600 border-blue-600'
+                            : 'border-gray-300'
+                        }`}>
+                          {selectedApprovers.includes(user.user_id) && (
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsApprovalModalOpen(false);
+                    setApprovalRequestId(null);
+                    setSelectedApprovers([]);
+                  }}
+                >
+                  キャンセル
+                </Button>
+                <Button 
+                  onClick={handleSubmitApproval}
+                  disabled={selectedApprovers.length === 0}
+                  className="bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300"
+                >
+                  承認申請を送信 ({selectedApprovers.length}名選択)
                 </Button>
               </div>
             </div>

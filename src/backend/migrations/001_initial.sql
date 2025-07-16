@@ -42,7 +42,7 @@ CREATE TABLE estimate_requests (
     budget_range_min DECIMAL(15,2),
     budget_range_max DECIMAL(15,2),
     requirements TEXT,
-    status VARCHAR(20) DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'SUBMITTED', 'RESPONDED', 'CLOSED')),
+    status VARCHAR(20) DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'SUBMITTED', 'PENDING_APPROVAL', 'RESPONDED', 'CLOSED')),
     created_by INTEGER REFERENCES users(user_id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

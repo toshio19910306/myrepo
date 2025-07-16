@@ -29,7 +29,7 @@ pub struct BulkApprovalRequest {
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/", get(get_approvals))
+        .route("/", get(get_approvals).post(create_approval_flow))
         .route("/:id", get(get_approval_flow))
         .route("/:id/approve", post(approve))
         .route("/:id/reject", post(reject))

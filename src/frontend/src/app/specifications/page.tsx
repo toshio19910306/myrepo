@@ -546,11 +546,6 @@ export default function SpecificationsPage() {
                           削除
                         </Button>
                       )}
-                      {spec.status === "DRAFT" && (
-                        <Button size="sm" className="bg-primary hover:bg-primary/90">
-                          承認申請
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>
