@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ interface ApprovalItem {
   current_step: number;
   total_steps: number;
   current_approver: string;
+  current_approver_id?: number;
   status: string;
   submitted_date: string;
   due_date: string;
@@ -36,7 +37,7 @@ export default function ApprovalsPage() {
   const [error, setError] = useState<string | null>(null);
   const { currentUser } = useUser();
 
-  const fetchApprovals = async () => {
+  const fetchApprovals = useCallback(async () => {
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -56,13 +57,13 @@ export default function ApprovalsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser]);
 
   useEffect(() => {
     if (currentUser) {
       fetchApprovals();
     }
-  }, [currentUser]);
+  }, [currentUser, fetchApprovals]);
 
   const mockApprovals = [
     {
@@ -248,7 +249,7 @@ export default function ApprovalsPage() {
 
   const displayApprovals = approvals.length > 0 ? approvals : mockApprovals;
   
-  const filteredApprovals = displayApprovals.filter((approval: any) => {
+  const filteredApprovals = displayApprovals.filter((approval: ApprovalItem) => {
     const isCurrentUserApprover = currentUser && (
       approval.current_approver === currentUser.name ||
       approval.current_approver_id === currentUser.id
