@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
+import { UserProvider } from "@/contexts/UserContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,8 +22,10 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <Navigation />
-        <main>{children}</main>
+        <UserProvider>
+          <Navigation />
+          <main>{children}</main>
+        </UserProvider>
       </body>
     </html>
   );

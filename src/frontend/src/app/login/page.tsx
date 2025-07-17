@@ -6,20 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useUser } from "@/contexts/UserContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { setCurrentUser } = useUser();
+
+  const mockUsers = [
+    { id: 1, name: "田中部長", email: "tanaka@company.com", department: "IT部", position: "部長" },
+    { id: 2, name: "佐藤課長", email: "sato@company.com", department: "IT部", position: "課長" },
+    { id: 3, name: "山田主任", email: "yamada@company.com", department: "IT部", position: "主任" },
+    { id: 4, name: "鈴木係長", email: "suzuki@company.com", department: "IT部", position: "係長" }
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     setTimeout(() => {
+      const user = mockUsers.find(u => u.email === email);
+      if (user) {
+        setCurrentUser(user);
+        router.push("/dashboard");
+      } else {
+        setCurrentUser(mockUsers[0]);
+        router.push("/dashboard");
+      }
       setIsLoading(false);
-      router.push("/dashboard");
     }, 1000);
   };
 

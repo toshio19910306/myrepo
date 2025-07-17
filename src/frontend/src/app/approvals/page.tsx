@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FileText } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
 
 interface ApprovalItem {
   id: string;
@@ -33,11 +34,14 @@ export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentUser } = useUser();
 
   const fetchApprovals = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/approvals`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const currentUserParam = currentUser ? `?current_user_id=${currentUser.id}` : '';
+      const response = await fetch(`${apiUrl}/api/approvals${currentUserParam}`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && apiResponse.data?.approvals) {
@@ -55,8 +59,10 @@ export default function ApprovalsPage() {
   };
 
   useEffect(() => {
-    fetchApprovals();
-  }, []);
+    if (currentUser) {
+      fetchApprovals();
+    }
+  }, [currentUser]);
 
   const mockApprovals = [
     {
@@ -69,6 +75,7 @@ export default function ApprovalsPage() {
       current_step: 2,
       total_steps: 3,
       current_approver: "田中部長",
+      current_approver_id: 1,
       status: "承認待ち",
       submitted_date: "2025-06-25",
       due_date: "2025-06-30",
@@ -88,34 +95,55 @@ export default function ApprovalsPage() {
       department: "IT部",
       current_step: 1,
       total_steps: 2,
-      current_approver: "田中部長",
+      current_approver: "佐藤課長",
+      current_approver_id: 2,
       status: "承認待ち",
       submitted_date: "2025-06-26",
       due_date: "2025-07-01",
       amount: "2,900,000円",
       history: [
         { step: 1, action: "申請", user: "佐藤課長", date: "2025-06-26 14:30", status: "完了" },
-        { step: 2, action: "承認", user: "田中部長", date: "-", status: "待機中" }
+        { step: 2, action: "承認", user: "佐藤課長", date: "-", status: "待機中" }
       ]
     },
     {
-      id: "APP-003",
-      type: "仕様書",
-      title: "セキュリティ監査仕様書",
-      request_id: "SPEC-003",
-      requester: "鈴木係長",
+      id: "APP-004",
+      type: "見積依頼",
+      title: "ネットワーク機器更新",
+      request_id: "REQ-004",
+      requester: "高橋次郎",
       department: "IT部",
-      current_step: 3,
-      total_steps: 3,
-      current_approver: "-",
-      status: "承認済み",
-      submitted_date: "2025-06-24",
-      due_date: "2025-06-29",
-      amount: "1,200,000円",
+      current_step: 1,
+      total_steps: 2,
+      current_approver: "山田主任",
+      current_approver_id: 3,
+      status: "承認待ち",
+      submitted_date: "2025-06-27",
+      due_date: "2025-07-02",
+      amount: "3,200,000円",
       history: [
-        { step: 1, action: "申請", user: "鈴木係長", date: "2025-06-24 10:00", status: "完了" },
-        { step: 2, action: "上程", user: "佐藤課長", date: "2025-06-24 15:30", status: "完了" },
-        { step: 3, action: "承認", user: "田中部長", date: "2025-06-25 11:15", status: "完了" }
+        { step: 1, action: "申請", user: "高橋次郎", date: "2025-06-27 10:00", status: "完了" },
+        { step: 2, action: "承認", user: "山田主任", date: "-", status: "待機中" }
+      ]
+    },
+    {
+      id: "APP-005",
+      type: "見積依頼",
+      title: "クラウド移行プロジェクト",
+      request_id: "REQ-005",
+      requester: "伊藤三郎",
+      department: "IT部",
+      current_step: 1,
+      total_steps: 3,
+      current_approver: "鈴木係長",
+      current_approver_id: 4,
+      status: "承認待ち",
+      submitted_date: "2025-06-28",
+      due_date: "2025-07-03",
+      amount: "8,500,000円",
+      history: [
+        { step: 1, action: "申請", user: "伊藤三郎", date: "2025-06-28 11:30", status: "完了" },
+        { step: 2, action: "承認", user: "鈴木係長", date: "-", status: "待機中" }
       ]
     }
   ];
@@ -220,11 +248,18 @@ export default function ApprovalsPage() {
 
   const displayApprovals = approvals.length > 0 ? approvals : mockApprovals;
   
-  const filteredApprovals = displayApprovals.filter((approval) =>
-    approval.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    approval.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (approval.request_id?.toString() || approval.id || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredApprovals = displayApprovals.filter((approval: any) => {
+    const isCurrentUserApprover = currentUser && (
+      approval.current_approver === currentUser.name ||
+      approval.current_approver_id === currentUser.id
+    );
+    const isPending = approval.status === "承認待ち";
+    const matchesSearch = approval.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      approval.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (approval.request_id?.toString() || approval.id || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return isPending && isCurrentUserApprover && matchesSearch;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -252,7 +287,7 @@ export default function ApprovalsPage() {
             承認管理
           </h1>
           <p className="text-muted-foreground">
-            多段階承認プロセスの管理・追跡・実行
+            {currentUser ? `${currentUser.name}さんの承認待ち案件` : "多段階承認プロセスの管理・追跡・実行"}
           </p>
         </header>
 

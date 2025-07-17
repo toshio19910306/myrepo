@@ -5,7 +5,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::{
@@ -19,6 +19,7 @@ use crate::{
 struct ApprovalQuery {
     page: Option<i32>,
     per_page: Option<i32>,
+    current_user_id: Option<i32>,
 }
 
 #[derive(serde::Deserialize)]
@@ -43,8 +44,9 @@ pub fn routes() -> Router<AppState> {
 
 async fn get_approvals(
     State(_state): State<AppState>,
+    Query(query): Query<ApprovalQuery>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
-    let mock_approvals = vec![
+    let mut mock_approvals = vec![
         json!({
             "id": "APP-001",
             "type": "見積依頼",
@@ -55,6 +57,7 @@ async fn get_approvals(
             "current_step": 2,
             "total_steps": 3,
             "current_approver": "田中部長",
+            "current_approver_id": 1,
             "status": "承認待ち",
             "submitted_date": "2025-06-25",
             "due_date": "2025-06-30",
@@ -69,7 +72,8 @@ async fn get_approvals(
             "department": "IT部",
             "current_step": 1,
             "total_steps": 2,
-            "current_approver": "田中部長",
+            "current_approver": "佐藤課長",
+            "current_approver_id": 2,
             "status": "承認待ち",
             "submitted_date": "2025-06-26",
             "due_date": "2025-07-01",
@@ -85,12 +89,56 @@ async fn get_approvals(
             "current_step": 3,
             "total_steps": 3,
             "current_approver": "-",
+            "current_approver_id": null,
             "status": "承認済み",
             "submitted_date": "2025-06-24",
             "due_date": "2025-06-29",
             "amount": "1,200,000円"
+        }),
+        json!({
+            "id": "APP-004",
+            "type": "見積依頼",
+            "title": "ネットワーク機器更新",
+            "request_id": "REQ-004",
+            "requester": "高橋次郎",
+            "department": "IT部",
+            "current_step": 1,
+            "total_steps": 2,
+            "current_approver": "山田主任",
+            "current_approver_id": 3,
+            "status": "承認待ち",
+            "submitted_date": "2025-06-27",
+            "due_date": "2025-07-02",
+            "amount": "3,200,000円"
+        }),
+        json!({
+            "id": "APP-005",
+            "type": "見積依頼",
+            "title": "クラウド移行プロジェクト",
+            "request_id": "REQ-005",
+            "requester": "伊藤三郎",
+            "department": "IT部",
+            "current_step": 1,
+            "total_steps": 3,
+            "current_approver": "鈴木係長",
+            "current_approver_id": 4,
+            "status": "承認待ち",
+            "submitted_date": "2025-06-28",
+            "due_date": "2025-07-03",
+            "amount": "8,500,000円"
         })
     ];
+
+    if let Some(current_user_id) = query.current_user_id {
+        mock_approvals = mock_approvals.into_iter()
+            .filter(|approval| {
+                let status = approval.get("status").and_then(|s| s.as_str()).unwrap_or("");
+                let approver_id = approval.get("current_approver_id").and_then(|id| id.as_i64());
+                
+                status == "承認待ち" && approver_id == Some(current_user_id as i64)
+            })
+            .collect();
+    }
 
     Ok(Json(ApiResponse {
         success: true,
