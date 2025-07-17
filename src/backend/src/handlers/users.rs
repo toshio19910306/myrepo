@@ -2,14 +2,14 @@ use axum::{
     extract::{Query, State},
     http::StatusCode,
     response::Json,
-    routing::get,
+    routing::{get, post},
     Router,
 };
 use serde::Deserialize;
 use serde_json::json;
 
 use crate::{
-    services::user_service_impl,
+    services::{user_service_impl, user_service},
     utils::response::{ApiResponse, ErrorResponse},
     AppState,
 };
@@ -21,7 +21,7 @@ pub struct UserQuery {
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/", get(get_users))
+        .route("/", get(get_users).post(create_user))
         .route("/approvers", get(get_approvers))
 }
 
@@ -111,6 +111,47 @@ async fn get_approvers(
                 success: false,
                 error: json!({
                     "code": "INTERNAL_ERROR",
+                    "message": e.to_string()
+                }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
+}
+
+async fn create_user(
+    State(state): State<AppState>,
+    Json(request): Json<user_service::CreateUserRequest>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    match user_service::create_user(&state.db_pool, request).await {
+        Ok(user) => {
+            let user_data = serde_json::json!({
+                "user_id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "full_name": user.full_name,
+                "department": user.department,
+                "position": user.position,
+                "user_type": user.user_type,
+                "company_name": user.company_name,
+                "is_active": user.is_active,
+                "created_at": user.created_at,
+                "updated_at": user.updated_at
+            });
+
+            Ok(Json(ApiResponse {
+                success: true,
+                data: Some(user_data),
+                message: "ユーザーが正常に作成されました".to_string(),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }))
+        },
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({
+                    "code": "USER_CREATION_FAILED",
                     "message": e.to_string()
                 }),
                 timestamp: chrono::Utc::now().to_rfc3339(),

@@ -23,7 +23,7 @@ impl Config {
         let default_cors_origins = if is_production {
             "https://*.azurestaticapps.net,https://*.azurewebsites.net".to_string()
         } else {
-            "http://localhost:3000,http://localhost:5173".to_string()
+            "http://localhost:3000,http://localhost:3001,http://localhost:5173".to_string()
         };
         
         Ok(Config {

@@ -72,22 +72,9 @@ async fn main() -> anyhow::Result<()> {
         db_pool,
     };
 
-    let frontend_url = std::env::var("FRONTEND_URL")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string());
-    
-    let cors_origin = if frontend_url.contains("@") {
-        let parts: Vec<&str> = frontend_url.split("@").collect();
-        if parts.len() == 2 {
-            format!("https://{}", parts[1])
-        } else {
-            frontend_url.clone()
-        }
-    } else {
-        frontend_url.clone()
-    };
-    
     let cors = CorsLayer::new()
-        .allow_origin(cors_origin.parse::<HeaderValue>().unwrap())
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_origin("http://localhost:3001".parse::<HeaderValue>().unwrap())
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
         .allow_credentials(true);
