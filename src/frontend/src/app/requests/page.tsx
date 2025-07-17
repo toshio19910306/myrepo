@@ -509,15 +509,15 @@ export default function RequestsPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/approvers`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
-          setUsers(apiResponse.data.filter((user: User) => user.is_active));
+          setUsers(apiResponse.data);
         }
       }
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      console.error('Failed to fetch approvers:', error);
     }
   };
 
@@ -535,42 +535,25 @@ export default function RequestsPage() {
     setApprovalError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/approvals`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${approvalRequestId}/submit-for-approval`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          target_type: 'REQUEST',
-          target_id: approvalRequestId,
-          approver_ids: selectedApprovers,
-          created_by: 1
+          approver_ids: selectedApprovers
         }),
       });
 
       if (response.ok) {
-        const statusResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${approvalRequestId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'PENDING_APPROVAL'
-          }),
-        });
-
-        if (statusResponse.ok) {
-          await fetchRequests();
-          setIsApprovalModalOpen(false);
-          setApprovalRequestId(null);
-          setSelectedApprovers([]);
-          setError(null);
-        } else {
-          setApprovalError('ステータス更新に失敗しました');
-        }
+        await fetchRequests();
+        setIsApprovalModalOpen(false);
+        setApprovalRequestId(null);
+        setSelectedApprovers([]);
+        setError(null);
       } else {
         const errorData = await response.json().catch(() => ({}));
-        setApprovalError(errorData.message || '承認申請に失敗しました');
+        setApprovalError(errorData.error?.message || '承認申請に失敗しました');
       }
     } catch (error) {
       console.error('Error submitting approval request:', error);

@@ -21,6 +21,7 @@ pub fn routes() -> Router<AppState> {
         .route("/approved", get(get_approved_requests))
         .route("/:id", get(get_request).put(update_request).delete(delete_request))
         .route("/:id/submit", post(submit_request))
+        .route("/:id/submit-for-approval", post(submit_request_for_approval))
         .route("/:id/copy", post(copy_request))
 }
 
@@ -400,4 +401,96 @@ async fn copy_request(
             }),
         )),
     }
+}
+#[derive(serde::Deserialize)]
+struct SubmitForApprovalRequest {
+    approver_ids: Vec<i32>,
+}
+
+async fn submit_request_for_approval(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+    Json(payload): Json<SubmitForApprovalRequest>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    let mut tx = state.db_pool.begin().await.map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
+            success: false,
+            error: json!({
+                "code": "TRANSACTION_ERROR",
+                "message": e.to_string()
+            }),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        }))
+    })?;
+
+    let updated_request = sqlx::query_as::<_, crate::models::EstimateRequest>(
+        "UPDATE estimate_requests 
+         SET status = 'PENDING_APPROVAL', updated_at = $2
+         WHERE request_id = $1
+         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, status, created_by, created_at, updated_at"
+    )
+    .bind(id)
+    .bind(chrono::Utc::now())
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
+            success: false,
+            error: json!({
+                "code": "UPDATE_ERROR",
+                "message": e.to_string()
+            }),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        }))
+    })?;
+
+    if updated_request.is_none() {
+        return Err((StatusCode::NOT_FOUND, Json(ErrorResponse {
+            success: false,
+            error: json!({
+                "code": "REQUEST_NOT_FOUND",
+                "message": "見積依頼が見つかりません"
+            }),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        })));
+    }
+
+    let approval_request = crate::models::CreateApprovalFlowRequest {
+        target_type: "REQUEST".to_string(),
+        target_id: id,
+        approver_ids: payload.approver_ids,
+        created_by: 1,
+    };
+
+    let approval_flow = crate::services::approval_service_impl::create_approval_flow(&mut tx, approval_request).await.map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
+            success: false,
+            error: json!({
+                "code": "APPROVAL_FLOW_ERROR",
+                "message": e.to_string()
+            }),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        }))
+    })?;
+
+    tx.commit().await.map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
+            success: false,
+            error: json!({
+                "code": "COMMIT_ERROR",
+                "message": e.to_string()
+            }),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        }))
+    })?;
+
+    Ok(Json(ApiResponse {
+        success: true,
+        data: Some(json!({
+            "request": updated_request.unwrap(),
+            "approval_flow": approval_flow
+        })),
+        message: "承認申請を送信しました".to_string(),
+        timestamp: chrono::Utc::now().to_rfc3339(),
+    }))
 }

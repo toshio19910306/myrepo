@@ -39,7 +39,10 @@ pub async fn create_approval_flow(
     pool: &PgPool,
     request: CreateApprovalFlowRequest,
 ) -> Result<ApprovalFlow> {
-    approval_service_impl::create_approval_flow(pool, request).await
+    let mut tx = pool.begin().await?;
+    let result = approval_service_impl::create_approval_flow(&mut tx, request).await?;
+    tx.commit().await?;
+    Ok(result)
 }
 
 pub async fn process_approval_action(
@@ -53,4 +56,11 @@ pub async fn process_approval_action(
 
 pub async fn get_approval_history(pool: &PgPool, flow_id: i32) -> Result<Vec<crate::models::ApprovalHistory>> {
     approval_service_impl::get_approval_history(pool, flow_id).await
+}
+
+pub async fn create_approval_flow_with_transaction(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    request: CreateApprovalFlowRequest,
+) -> Result<ApprovalFlow> {
+    approval_service_impl::create_approval_flow(tx, request).await
 }

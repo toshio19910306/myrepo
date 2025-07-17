@@ -6,7 +6,7 @@ use crate::models::{ApprovalFlow, ApprovalStep, ApprovalHistory, CreateApprovalF
 // use crate::services::email_service::EmailService; // Temporarily disabled
 
 pub async fn create_approval_flow(
-    pool: &PgPool,
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     request: CreateApprovalFlowRequest,
 ) -> Result<ApprovalFlow> {
     println!("About to insert approval flow");
@@ -21,7 +21,7 @@ pub async fn create_approval_flow(
     .bind(Utc::now());
     
     println!("Query prepared, about to execute fetch_one");
-    let approval_flow = match query.fetch_one(pool).await {
+    let approval_flow = match query.fetch_one(&mut **tx).await {
         Ok(flow) => {
             println!("fetch_one completed successfully, flow_id: {}", flow.flow_id);
             flow
@@ -44,7 +44,7 @@ pub async fn create_approval_flow(
         .bind((index + 1) as i32)
         .bind(approver_id)
         .bind(Utc::now())
-        .execute(pool)
+        .execute(&mut **tx)
         .await?;
         println!("Successfully inserted approval step {} for approver {}", index + 1, approver_id);
     }
