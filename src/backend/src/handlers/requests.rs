@@ -426,7 +426,7 @@ async fn submit_request_for_approval(
     let updated_request = sqlx::query_as::<_, crate::models::EstimateRequest>(
         "UPDATE estimate_requests 
          SET status = 'PENDING_APPROVAL', updated_at = $2
-         WHERE request_id = $1
+         WHERE request_id = $1 AND status = 'DRAFT'
          RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, status, created_by, created_at, updated_at"
     )
     .bind(id)
@@ -434,22 +434,23 @@ async fn submit_request_for_approval(
     .fetch_optional(&mut *tx)
     .await
     .map_err(|e| {
+        eprintln!("Database error during status update: {}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
             success: false,
             error: json!({
                 "code": "UPDATE_ERROR",
-                "message": e.to_string()
+                "message": format!("ステータス更新に失敗しました: {}", e)
             }),
             timestamp: chrono::Utc::now().to_rfc3339(),
         }))
     })?;
 
     if updated_request.is_none() {
-        return Err((StatusCode::NOT_FOUND, Json(ErrorResponse {
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse {
             success: false,
             error: json!({
-                "code": "REQUEST_NOT_FOUND",
-                "message": "見積依頼が見つかりません"
+                "code": "INVALID_STATUS_TRANSITION",
+                "message": "承認申請できません。リクエストが見つからないか、既に承認申請済みです。"
             }),
             timestamp: chrono::Utc::now().to_rfc3339(),
         })));
