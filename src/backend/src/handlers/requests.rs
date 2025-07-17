@@ -423,18 +423,72 @@ async fn submit_request_for_approval(
         }))
     })?;
 
+    sqlx::query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
+                success: false,
+                error: json!({
+                    "code": "TRANSACTION_SETUP_ERROR", 
+                    "message": e.to_string()
+                }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }))
+        })?;
+
+    let constraint_check = sqlx::query_scalar::<_, bool>(
+        "SELECT 'PENDING_APPROVAL'::text = ANY (ARRAY['DRAFT'::character varying, 'SUBMITTED'::character varying, 'PENDING_APPROVAL'::character varying, 'RESPONDED'::character varying, 'CLOSED'::character varying]::text[])"
+    )
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(|e| {
+        eprintln!("Constraint pre-check failed: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
+            success: false,
+            error: json!({
+                "code": "CONSTRAINT_CHECK_ERROR",
+                "message": format!("制約事前チェックに失敗しました: {}", e)
+            }),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        }))
+    })?;
+
+    if !constraint_check {
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
+            success: false,
+            error: json!({
+                "code": "CONSTRAINT_VALIDATION_ERROR",
+                "message": "PENDING_APPROVALは有効なステータス値ではありません"
+            }),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        })));
+    }
+
+    println!("DEBUG: About to update request {} with status 'PENDING_APPROVAL'", id);
+    println!("DEBUG: Current timestamp: {}", chrono::Utc::now());
+
     let updated_request = sqlx::query_as::<_, crate::models::EstimateRequest>(
         "UPDATE estimate_requests 
-         SET status = 'PENDING_APPROVAL', updated_at = $2
-         WHERE request_id = $1 AND status = 'DRAFT'
+         SET status = $1, updated_at = $2
+         WHERE request_id = $3 AND status = 'DRAFT'
          RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, status, created_by, created_at, updated_at"
     )
-    .bind(id)
+    .bind("PENDING_APPROVAL")
     .bind(chrono::Utc::now())
+    .bind(id)
     .fetch_optional(&mut *tx)
     .await
     .map_err(|e| {
         eprintln!("Database error during status update: {}", e);
+        eprintln!("Error details: {:?}", e);
+        
+        if e.to_string().contains("estimate_requests_status_check") {
+            eprintln!("CONSTRAINT ERROR DETECTED - investigating parameters");
+            eprintln!("Request ID: {}", id);
+            eprintln!("Target status: PENDING_APPROVAL");
+        }
+        
         (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
             success: false,
             error: json!({
