@@ -1,0 +1,58 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: estimate-db-dev
+    environment:
+      POSTGRES_DB: estimate_request_db
+      POSTGRES_USER: estimate_user
+      POSTGRES_PASSWORD: estimate_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    networks:
+      - estimate-network-dev
+
+  # Backend API (Development mode)
+  backend-dev:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: estimate-backend-dev
+    environment:
+      DATABASE_URL: postgresql://estimate_user:estimate_password@database:5432/estimate_request_db
+      JWT_SECRET: development-jwt-secret-for-docker
+      ENVIRONMENT: development
+      PORT: 8000
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - database
+    networks:
+      - estimate-network-dev
+    restart: unless-stopped
+
+  # Frontend Application (Development mode)
+  frontend-dev:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+    container_name: estimate-frontend-dev
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-dev
+    networks:
+      - estimate-network-dev
+    restart: unless-stopped
+
+volumes:
+  postgres_data_dev:
+
+networks:
+  estimate-network-dev:
+    driver: bridge
