@@ -569,11 +569,12 @@ export default function SpecificationsPage() {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">仕様書タイトル</label>
-                  <Input
+                  <input
+                    type="text"
                     value={newSpec.title}
                     onChange={(e) => setNewSpec(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="仕様書のタイトルを入力してください"
-                    className="w-full"
+                    className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 
@@ -656,30 +657,21 @@ export default function SpecificationsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">希望納期 (YYYY-MM-DD形式)</label>
                   <input
-                    type="text"
+                    type="date"
                     value={newSpec.desiredDeliveryDate}
-                    onChange={(e) => {
-                      const dateValue = e.target.value;
-                      console.log('Date text input onChange:', { 
-                        rawValue: dateValue, 
-                        type: typeof dateValue,
-                        length: dateValue.length 
-                      });
-                      setNewSpec(prev => ({ ...prev, desiredDeliveryDate: dateValue }));
-                    }}
-                    placeholder="例: 2025-07-15"
-                    pattern="\d{4}-\d{2}-\d{2}"
+                    onChange={(e) => setNewSpec(prev => ({ ...prev, desiredDeliveryDate: e.target.value }))}
                     className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">納入場所</label>
-                  <Input
+                  <input
+                    type="text"
                     value={newSpec.deliveryLocation}
                     onChange={(e) => setNewSpec(prev => ({ ...prev, deliveryLocation: e.target.value }))}
                     placeholder="納入場所を入力してください"
-                    className="w-full"
+                    className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 
@@ -695,13 +687,13 @@ export default function SpecificationsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">見積書部数</label>
-                  <Input
+                  <input
                     type="number"
                     min="1"
                     value={newSpec.estimateCopies}
                     onChange={(e) => setNewSpec(prev => ({ ...prev, estimateCopies: parseInt(e.target.value) || 1 }))}
                     placeholder="見積書部数を入力してください"
-                    className="w-full"
+                    className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 
@@ -774,11 +766,12 @@ export default function SpecificationsPage() {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">仕様書タイトル</label>
-                  <Input
+                  <input
+                    type="text"
                     value={editSpec.title}
                     onChange={(e) => setEditSpec(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="仕様書のタイトルを入力してください"
-                    className="w-full"
+                    className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 
@@ -872,21 +865,22 @@ export default function SpecificationsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">希望納期</label>
-                  <Input
+                  <input
                     type="date"
                     value={editSpec.desiredDeliveryDate}
                     onChange={(e) => setEditSpec(prev => ({ ...prev, desiredDeliveryDate: e.target.value }))}
-                    className="w-full"
+                    className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">納品場所</label>
-                  <Input
+                  <input
+                    type="text"
                     value={editSpec.deliveryLocation}
                     onChange={(e) => setEditSpec(prev => ({ ...prev, deliveryLocation: e.target.value }))}
                     placeholder="納品場所を入力してください"
-                    className="w-full"
+                    className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 
@@ -902,13 +896,13 @@ export default function SpecificationsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">見積書部数</label>
-                  <Input
+                  <input
                     type="number"
                     min="1"
                     value={editSpec.estimateCopies}
                     onChange={(e) => setEditSpec(prev => ({ ...prev, estimateCopies: parseInt(e.target.value) || 1 }))}
                     placeholder="見積書部数を入力してください"
-                    className="w-full"
+                    className="w-full p-2 border border-gray-300 rounded-md"
                   />
                 </div>
 

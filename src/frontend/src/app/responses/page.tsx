@@ -35,15 +35,23 @@ export default function ResponsesPage() {
 
   const fetchResponses = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/responses");
+      setError(null);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses`);
       if (response.ok) {
         const apiResponse = await response.json();
-        setResponses(apiResponse.data || []);
+        if (apiResponse.success && Array.isArray(apiResponse.data)) {
+          setResponses(apiResponse.data);
+        } else {
+          setResponses([]);
+        }
       } else {
-        setError("見積回答の取得に失敗しました");
+        const errorText = await response.text();
+        console.error('Response fetch error:', errorText);
+        setError(`見積回答の取得に失敗しました: ${response.status} ${response.statusText}`);
       }
-    } catch {
-      setError("見積回答の取得中にエラーが発生しました");
+    } catch (err) {
+      console.error('Error fetching responses:', err);
+      setError(`見積回答の取得中にエラーが発生しました: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }

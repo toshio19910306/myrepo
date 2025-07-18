@@ -105,9 +105,10 @@ export default function RequestsPage() {
   const fetchRequests = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests`);
       if (!response.ok) {
-        throw new Error('Failed to fetch requests');
+        throw new Error(`Failed to fetch requests: ${response.status} ${response.statusText}`);
       }
       const apiResponse = await response.json();
       if (!apiResponse.success) {
@@ -116,8 +117,10 @@ export default function RequestsPage() {
       const data = Array.isArray(apiResponse.data) ? apiResponse.data : [];
       setRequests(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
       console.error('Error fetching requests:', err);
+      alert(`見積依頼の取得に失敗しました: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
