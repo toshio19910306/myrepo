@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::Json,
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use serde::Deserialize;
@@ -17,19 +17,25 @@ use crate::{
 #[derive(Debug, Deserialize)]
 pub struct UserQuery {
     pub user_type: Option<String>,
+    pub page: Option<i32>,
+    pub limit: Option<i32>,
 }
 
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(get_users).post(create_user))
+        .route("/:id", get(get_user_by_id).put(update_user).delete(delete_user))
         .route("/approvers", get(get_approvers))
 }
 
 async fn get_users(
     State(state): State<AppState>,
     Query(query): Query<UserQuery>,
-) -> Result<Json<ApiResponse<Vec<serde_json::Value>>>, (StatusCode, Json<ErrorResponse>)> {
-    match user_service_impl::get_users_by_type(&state.db_pool, query.user_type).await {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(50);
+
+    match user_service::get_all_users(&state.db_pool, page, limit).await {
         Ok(users) => {
             let user_data: Vec<serde_json::Value> = users
                 .into_iter()
@@ -69,10 +75,131 @@ async fn get_users(
     }
 }
 
+async fn get_user_by_id(
+    State(state): State<AppState>,
+    Path(user_id): Path<i32>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    match user_service::get_user_by_id(&state.db_pool, user_id).await {
+        Ok(Some(user)) => {
+            let user_data = json!({
+                "user_id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "full_name": user.full_name,
+                "department": user.department,
+                "position": user.position,
+                "user_type": user.user_type,
+                "company_name": user.company_name,
+                "is_active": user.is_active,
+                "created_at": user.created_at,
+                "updated_at": user.updated_at
+            });
+            Ok(Json(ApiResponse {
+                success: true,
+                data: Some(user_data),
+                message: "ユーザー詳細を取得しました".to_string(),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }))
+        },
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "USER_NOT_FOUND", "message": "ユーザーが見つかりません"}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "INTERNAL_ERROR", "message": e.to_string()}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
+}
+
+async fn update_user(
+    State(state): State<AppState>,
+    Path(user_id): Path<i32>,
+    Json(request): Json<user_service::UpdateUserRequest>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    match user_service::update_user(&state.db_pool, user_id, request).await {
+        Ok(Some(user)) => {
+            let user_data = json!({
+                "user_id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "full_name": user.full_name,
+                "department": user.department,
+                "position": user.position,
+                "user_type": user.user_type,
+                "company_name": user.company_name,
+                "is_active": user.is_active,
+                "created_at": user.created_at,
+                "updated_at": user.updated_at
+            });
+            Ok(Json(ApiResponse {
+                success: true,
+                data: Some(user_data),
+                message: "ユーザー情報を更新しました".to_string(),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }))
+        },
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "USER_NOT_FOUND", "message": "ユーザーが見つかりません"}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "INTERNAL_ERROR", "message": e.to_string()}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
+}
+
+async fn delete_user(
+    State(state): State<AppState>,
+    Path(user_id): Path<i32>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    match user_service::delete_user(&state.db_pool, user_id).await {
+        Ok(true) => Ok(Json(ApiResponse {
+            success: true,
+            data: Some(json!({"user_id": user_id})),
+            message: "ユーザーを削除しました".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        })),
+        Ok(false) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "USER_NOT_FOUND", "message": "ユーザーが見つかりません"}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "INTERNAL_ERROR", "message": e.to_string()}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
+}
+
 async fn get_approvers(
     State(state): State<AppState>,
-) -> Result<Json<ApiResponse<Vec<serde_json::Value>>>, (StatusCode, Json<ErrorResponse>)> {
-    match user_service_impl::get_users_by_type(&state.db_pool, None).await {
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    match user_service::get_users_by_type(&state.db_pool, None).await {
         Ok(users) => {
             let user_data: Vec<serde_json::Value> = users
                 .into_iter()

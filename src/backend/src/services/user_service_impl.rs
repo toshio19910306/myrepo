@@ -3,7 +3,7 @@ use chrono::Utc;
 use sqlx::{PgPool, Row};
 
 use crate::models::{User};
-// use crate::services::auth_service; // Temporarily disabled
+use crate::services::user_service::UpdateUserRequest;
 
 pub async fn get_all_users(pool: &PgPool, page: i32, per_page: i32) -> Result<Vec<User>> {
     let offset = (page - 1) * per_page;
@@ -27,7 +27,7 @@ pub async fn get_user_by_id(pool: &PgPool, user_id: i32) -> Result<Option<User>>
     let user = sqlx::query_as::<_, User>(
         "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at 
          FROM users 
-         WHERE user_id = $1"
+         WHERE user_id = $1 AND is_active = true"
     )
     .bind(user_id)
     .fetch_optional(pool)
@@ -36,13 +36,36 @@ pub async fn get_user_by_id(pool: &PgPool, user_id: i32) -> Result<Option<User>>
     Ok(user)
 }
 
-// pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<User> {
+pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest) -> Result<Option<User>> {
+    let user = sqlx::query_as::<_, User>(
+        "UPDATE users SET 
+         full_name = COALESCE($2, full_name),
+         email = COALESCE($3, email),
+         department = COALESCE($4, department),
+         position = COALESCE($5, position),
+         user_type = COALESCE($6, user_type),
+         company_name = COALESCE($7, company_name),
+         updated_at = $8
+         WHERE user_id = $1 AND is_active = true
+         RETURNING user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at"
+    )
+    .bind(user_id)
+    .bind(&request.full_name)
+    .bind(&request.email)
+    .bind(&request.department)
+    .bind(&request.position)
+    .bind(&request.user_type)
+    .bind(&request.company_name)
+    .bind(Utc::now())
+    .fetch_optional(pool)
+    .await?;
 
-// pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest) -> Result<Option<User>> {
+    Ok(user)
+}
 
 pub async fn delete_user(pool: &PgPool, user_id: i32) -> Result<bool> {
     let result = sqlx::query(
-        "UPDATE users SET is_active = false, updated_at = $2 WHERE user_id = $1"
+        "UPDATE users SET is_active = false, updated_at = $2 WHERE user_id = $1 AND is_active = true"
     )
     .bind(user_id)
     .bind(Utc::now())

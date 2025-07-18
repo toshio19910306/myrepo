@@ -1,34 +1,42 @@
 use anyhow::Result;
 use chrono::Utc;
 use sqlx::PgPool;
+use serde::{Deserialize, Serialize};
 
 use crate::models::{User};
-// use crate::services::auth_service; // Temporarily disabled
 
-pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>> {
-    let users = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at 
-         FROM users 
-         WHERE is_active = true 
-         ORDER BY created_at DESC"
-    )
-    .fetch_all(pool)
-    .await?;
-
-    Ok(users)
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateUserRequest {
+    pub full_name: Option<String>,
+    pub email: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
+    pub user_type: Option<String>,
+    pub company_name: Option<String>,
 }
 
-pub async fn get_user_by_id(pool: &PgPool, id: i32) -> Result<Option<User>> {
-    let user = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at 
-         FROM users 
-         WHERE user_id = $1 AND is_active = true"
-    )
-    .bind(id)
-    .fetch_optional(pool)
-    .await?;
+pub async fn get_all_users(pool: &PgPool, page: i32, limit: i32) -> Result<Vec<User>> {
+    crate::services::user_service_impl::get_all_users(pool, page, limit).await
+}
 
-    Ok(user)
+pub async fn get_user_by_id(pool: &PgPool, user_id: i32) -> Result<Option<User>> {
+    crate::services::user_service_impl::get_user_by_id(pool, user_id).await
+}
+
+pub async fn get_user_by_username(pool: &PgPool, username: &str) -> Result<Option<User>> {
+    crate::services::user_service_impl::get_user_by_username(pool, username).await
+}
+
+pub async fn get_users_by_type(pool: &PgPool, user_type: Option<String>) -> Result<Vec<User>> {
+    crate::services::user_service_impl::get_users_by_type(pool, user_type).await
+}
+
+pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest) -> Result<Option<User>> {
+    crate::services::user_service_impl::update_user(pool, user_id, request).await
+}
+
+pub async fn delete_user(pool: &PgPool, user_id: i32) -> Result<bool> {
+    crate::services::user_service_impl::delete_user(pool, user_id).await
 }
 
 #[derive(serde::Deserialize)]
@@ -64,33 +72,6 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     .bind(Utc::now())
     .bind(Utc::now())
     .fetch_one(pool)
-    .await?;
-
-    Ok(user)
-}
-
-// pub async fn update_user(pool: &PgPool, id: i32, request: UpdateUserRequest) -> Result<Option<User>> {
-
-pub async fn delete_user(pool: &PgPool, id: i32) -> Result<bool> {
-    let result = sqlx::query(
-        "UPDATE users SET is_active = false, updated_at = $2 WHERE user_id = $1 AND is_active = true"
-    )
-    .bind(id)
-    .bind(Utc::now())
-    .execute(pool)
-    .await?;
-
-    Ok(result.rows_affected() > 0)
-}
-
-pub async fn get_user_by_username(pool: &PgPool, username: &str) -> Result<Option<User>> {
-    let user = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at 
-         FROM users 
-         WHERE username = $1 AND is_active = true"
-    )
-    .bind(username)
-    .fetch_optional(pool)
     .await?;
 
     Ok(user)
