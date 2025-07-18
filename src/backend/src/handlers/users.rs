@@ -46,8 +46,6 @@ async fn get_users(
                     "full_name": u.full_name,
                     "department": u.department,
                     "position": u.position,
-                    "user_type": u.user_type,
-                    "company_name": u.company_name,
                     "is_active": u.is_active,
                     "created_at": u.created_at,
                     "updated_at": u.updated_at
@@ -88,8 +86,6 @@ async fn get_user_by_id(
                 "full_name": user.full_name,
                 "department": user.department,
                 "position": user.position,
-                "user_type": user.user_type,
-                "company_name": user.company_name,
                 "is_active": user.is_active,
                 "created_at": user.created_at,
                 "updated_at": user.updated_at
@@ -134,8 +130,6 @@ async fn update_user(
                 "full_name": user.full_name,
                 "department": user.department,
                 "position": user.position,
-                "user_type": user.user_type,
-                "company_name": user.company_name,
                 "is_active": user.is_active,
                 "created_at": user.created_at,
                 "updated_at": user.updated_at
@@ -217,8 +211,6 @@ async fn get_approvers(
                     "full_name": u.full_name,
                     "department": u.department,
                     "position": u.position,
-                    "user_type": u.user_type,
-                    "company_name": u.company_name,
                     "is_active": u.is_active,
                     "created_at": u.created_at,
                     "updated_at": u.updated_at
@@ -259,8 +251,6 @@ async fn create_user(
                 "full_name": user.full_name,
                 "department": user.department,
                 "position": user.position,
-                "user_type": user.user_type,
-                "company_name": user.company_name,
                 "is_active": user.is_active,
                 "created_at": user.created_at,
                 "updated_at": user.updated_at

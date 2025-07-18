@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from "../../components/ui/checkbox";
 
@@ -28,8 +27,6 @@ interface User {
   full_name: string;
   department?: string;
   position?: string;
-  user_type: string;
-  company_name?: string;
   permissions?: string[];
   is_active: boolean;
   created_at: string;
@@ -43,8 +40,6 @@ interface UpdateUserRequest {
   email?: string;
   department?: string;
   position?: string;
-  user_type?: string;
-  company_name?: string;
   permissions?: string[];
 }
 
@@ -79,8 +74,6 @@ export default function UsersPage() {
     email: '',
     department: '',
     position: '',
-    user_type: '',
-    company_name: '',
     permissions: [],
   });
 
@@ -177,7 +170,6 @@ export default function UsersPage() {
           position: newUser.position,
           permissions: newUser.permissions,
           email: newUser.email,
-          user_type: "IT",
           password: "defaultPassword123"
         }),
       });
@@ -258,8 +250,6 @@ export default function UsersPage() {
           email: updateFormData.email,
           department: updateFormData.department,
           position: updateFormData.position,
-          user_type: updateFormData.user_type,
-          company_name: updateFormData.company_name,
         }),
       });
 
@@ -325,8 +315,6 @@ export default function UsersPage() {
       email: user.email,
       department: user.department || '',
       position: user.position || '',
-      user_type: user.user_type,
-      company_name: user.company_name || '',
       permissions: user.permissions || [],
     });
     setShowUpdateModal(true);
@@ -425,12 +413,6 @@ export default function UsersPage() {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.department || '-'}</TableCell>
                       <TableCell>{user.position || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant={user.user_type === 'admin' ? 'default' : 'secondary'}>
-                          {user.user_type === 'admin' ? '管理者' : user.user_type === 'approver' ? '承認者' : '一般ユーザー'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{user.company_name || '-'}</TableCell>
                       <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -653,17 +635,6 @@ export default function UsersPage() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-medium">ユーザータイプ</Label>
-                    <p className="mt-1 p-2 bg-gray-50 rounded">
-                      {selectedUser.user_type === 'admin' ? '管理者' : 
-                       selectedUser.user_type === 'approver' ? '承認者' : '一般ユーザー'}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="font-medium">会社名</Label>
-                    <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.company_name || '-'}</p>
-                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -757,28 +728,6 @@ export default function UsersPage() {
                     type="text"
                     value={updateFormData.position}
                     onChange={(e) => handleUpdateInputChange('position', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="update_user_type">ユーザータイプ *</Label>
-                  <Select value={updateFormData.user_type} onValueChange={(value) => handleUpdateInputChange('user_type', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">一般ユーザー</SelectItem>
-                      <SelectItem value="approver">承認者</SelectItem>
-                      <SelectItem value="admin">管理者</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="update_company_name">会社名</Label>
-                  <Input
-                    id="update_company_name"
-                    type="text"
-                    value={updateFormData.company_name}
-                    onChange={(e) => handleUpdateInputChange('company_name', e.target.value)}
                   />
                 </div>
 

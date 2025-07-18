@@ -11,8 +11,6 @@ pub struct UpdateUserRequest {
     pub email: Option<String>,
     pub department: Option<String>,
     pub position: Option<String>,
-    pub user_type: Option<String>,
-    pub company_name: Option<String>,
 }
 
 pub async fn get_all_users(pool: &PgPool, page: i32, limit: i32) -> Result<Vec<User>> {
@@ -73,8 +71,8 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     .bind(&request.full_name)
     .bind(&request.department)
     .bind(&request.position)
-    .bind(&request.user_type)
-    .bind(&request.company_name.as_deref().unwrap_or("Default Company"))
+    .bind("IT")
+    .bind("Default Company")
     .bind(true)
     .bind(Utc::now())
     .bind(Utc::now())
@@ -91,9 +89,7 @@ pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest
          email = COALESCE($3, email),
          department = COALESCE($4, department),
          position = COALESCE($5, position),
-         user_type = COALESCE($6, user_type),
-         company_name = COALESCE($7, company_name),
-         updated_at = $8
+         updated_at = $6
          WHERE user_id = $1 AND is_active = true
          RETURNING user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at"
     )
@@ -102,8 +98,6 @@ pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest
     .bind(&request.email)
     .bind(&request.department)
     .bind(&request.position)
-    .bind(&request.user_type)
-    .bind(&request.company_name)
     .bind(Utc::now())
     .fetch_optional(pool)
     .await?;
