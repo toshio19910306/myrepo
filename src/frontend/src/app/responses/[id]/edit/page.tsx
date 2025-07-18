@@ -23,8 +23,6 @@ interface EstimateRequest {
 interface User {
   user_id: number;
   full_name: string;
-  company_name?: string;
-  user_type: string;
 }
 
 interface AttachedFile {
@@ -115,7 +113,7 @@ export default function EditResponsePage() {
 
     const fetchVendors = async () => {
       try {
-        const response = await fetch("/api/users?user_type=VENDOR");
+        const response = await fetch("/api/users");
         if (response.ok) {
           const data = await response.json();
           setVendors(data);
@@ -264,7 +262,7 @@ export default function EditResponsePage() {
                   <SelectContent>
                     {vendors.map((vendor) => (
                       <SelectItem key={vendor.user_id} value={vendor.user_id.toString()}>
-                        {vendor.full_name} ({vendor.company_name})
+                        {vendor.full_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
