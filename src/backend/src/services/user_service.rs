@@ -69,8 +69,6 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     .bind(&request.full_name)
     .bind(&request.department)
     .bind(&request.position)
-    .bind("IT")
-    .bind("Default Company")
     .bind(true)
     .bind(Utc::now())
     .bind(Utc::now())

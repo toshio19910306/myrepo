@@ -12,7 +12,6 @@ use crate::services::user_service_impl;
 pub struct Claims {
     pub sub: String,
     pub user_id: i32,
-    pub user_type: String,
     pub exp: usize,
 }
 
@@ -38,7 +37,6 @@ fn generate_token(user: &User, duration: Duration) -> Result<String> {
     let claims = Claims {
         sub: user.username.clone(),
         user_id: user.user_id,
-        user_type: user.user_type.clone(),
         exp: (Utc::now() + duration).timestamp() as usize,
     };
 

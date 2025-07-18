@@ -16,7 +16,6 @@ use crate::{
 
 #[derive(Debug, Deserialize)]
 pub struct UserQuery {
-    pub user_type: Option<String>,
     pub page: Option<i32>,
     pub limit: Option<i32>,
 }
