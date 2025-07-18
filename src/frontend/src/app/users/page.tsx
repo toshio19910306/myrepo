@@ -9,7 +9,9 @@ import { Checkbox } from "../../components/ui/checkbox";
 
 interface NewUser {
   userId: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
+  email: string;
   department: string;
   position: string;
   permissions: string[];
@@ -34,7 +36,9 @@ export default function UsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newUser, setNewUser] = useState<NewUser>({
     userId: "",
-    fullName: "",
+    firstName: "",
+    lastName: "",
+    email: "",
     department: "",
     position: "",
     permissions: []
@@ -99,8 +103,8 @@ export default function UsersPage() {
   };
 
   const handleSaveUser = async () => {
-    if (!newUser.userId || !newUser.fullName) {
-      alert("ユーザーIDと姓名は必須項目です。");
+    if (!newUser.userId || !newUser.firstName || !newUser.lastName || !newUser.email) {
+      alert("ユーザーID、姓、名、メールアドレスは必須項目です。");
       return;
     }
 
@@ -113,11 +117,11 @@ export default function UsersPage() {
         },
         body: JSON.stringify({
           username: newUser.userId,
-          full_name: newUser.fullName,
+          full_name: `${newUser.lastName} ${newUser.firstName}`,
           department: newUser.department,
           position: newUser.position,
           permissions: newUser.permissions,
-          email: `${newUser.userId}@company.com`,
+          email: newUser.email,
           user_type: "IT",
           password: "defaultPassword123"
         }),
@@ -126,7 +130,9 @@ export default function UsersPage() {
       if (response.ok) {
         setNewUser({
           userId: "",
-          fullName: "",
+          firstName: "",
+          lastName: "",
+          email: "",
           department: "",
           position: "",
           permissions: []
@@ -150,7 +156,9 @@ export default function UsersPage() {
     setShowCreateModal(false);
     setNewUser({
       userId: "",
-      fullName: "",
+      firstName: "",
+      lastName: "",
+      email: "",
       department: "",
       position: "",
       permissions: []
@@ -262,16 +270,6 @@ export default function UsersPage() {
                       <Button variant="outline" size="sm">
                         権限設定
                       </Button>
-                      {user.is_active && (
-                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                          無効化
-                        </Button>
-                      )}
-                      {!user.is_active && (
-                        <Button size="sm" className="bg-primary hover:bg-primary/90">
-                          有効化
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -306,16 +304,45 @@ export default function UsersPage() {
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="lastName" className="text-sm font-medium">
+                      姓 <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={newUser.lastName}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, lastName: e.target.value }))}
+                      placeholder="姓を入力"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="firstName" className="text-sm font-medium">
+                      名 <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={newUser.firstName}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, firstName: e.target.value }))}
+                      placeholder="名を入力"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="fullName" className="text-sm font-medium">
-                    ユーザー姓名 <span className="text-red-500">*</span>
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    メールアドレス <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="fullName"
-                    type="text"
-                    value={newUser.fullName}
-                    onChange={(e) => setNewUser(prev => ({ ...prev, fullName: e.target.value }))}
-                    placeholder="姓名を入力"
+                    id="email"
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="メールアドレスを入力"
                     className="mt-1"
                   />
                 </div>
