@@ -1,17 +1,31 @@
 use anyhow::Result;
 use chrono::Utc;
 use sqlx::PgPool;
+use serde::{Deserialize, Serialize};
 
 use crate::models::{User};
-// use crate::services::auth_service; // Temporarily disabled
 
-pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>> {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateUserRequest {
+    pub full_name: Option<String>,
+    pub email: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
+    pub user_type: Option<String>,
+    pub company_name: Option<String>,
+}
+
+pub async fn get_all_users(pool: &PgPool, page: i32, limit: i32) -> Result<Vec<User>> {
+    let offset = (page - 1) * limit;
     let users = sqlx::query_as::<_, User>(
         "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at 
          FROM users 
          WHERE is_active = true 
-         ORDER BY created_at DESC"
+         ORDER BY created_at DESC
+         LIMIT $1 OFFSET $2"
     )
+    .bind(limit)
+    .bind(offset)
     .fetch_all(pool)
     .await?;
 
@@ -40,7 +54,7 @@ pub struct CreateUserRequest {
     pub department: Option<String>,
     pub position: Option<String>,
     pub user_type: String,
-    pub permissions: Option<Vec<String>>,
+    pub company_name: Option<String>,
 }
 
 pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<User> {
@@ -59,7 +73,7 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     .bind(&request.department)
     .bind(&request.position)
     .bind(&request.user_type)
-    .bind("Default Company")
+    .bind(&request.company_name.as_deref().unwrap_or("Default Company"))
     .bind(true)
     .bind(Utc::now())
     .bind(Utc::now())
@@ -69,7 +83,60 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     Ok(user)
 }
 
-// pub async fn update_user(pool: &PgPool, id: i32, request: UpdateUserRequest) -> Result<Option<User>> {
+pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest) -> Result<Option<User>> {
+    let user = sqlx::query_as::<_, User>(
+        "UPDATE users SET 
+         full_name = COALESCE($2, full_name),
+         email = COALESCE($3, email),
+         department = COALESCE($4, department),
+         position = COALESCE($5, position),
+         user_type = COALESCE($6, user_type),
+         company_name = COALESCE($7, company_name),
+         updated_at = $8
+         WHERE user_id = $1 AND is_active = true
+         RETURNING user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at"
+    )
+    .bind(user_id)
+    .bind(&request.full_name)
+    .bind(&request.email)
+    .bind(&request.department)
+    .bind(&request.position)
+    .bind(&request.user_type)
+    .bind(&request.company_name)
+    .bind(Utc::now())
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(user)
+}
+
+pub async fn get_users_by_type(pool: &PgPool, user_type: Option<String>) -> Result<Vec<User>> {
+    let users = match user_type {
+        Some(ut) => {
+            sqlx::query_as::<_, User>(
+                "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at 
+                 FROM users 
+                 WHERE is_active = true AND user_type = $1
+                 ORDER BY created_at DESC"
+            )
+            .bind(&ut)
+            .fetch_all(pool)
+            .await?
+        },
+        None => {
+            sqlx::query_as::<_, User>(
+                "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, company_name, is_active, created_at, updated_at 
+                 FROM users 
+                 WHERE is_active = true
+                 ORDER BY created_at DESC"
+            )
+            .fetch_all(pool)
+            .await?
+        }
+    };
+
+    Ok(users)
+}
 
 pub async fn delete_user(pool: &PgPool, id: i32) -> Result<bool> {
     let result = sqlx::query(
