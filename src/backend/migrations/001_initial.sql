@@ -120,5 +120,5 @@ CREATE INDEX idx_approval_steps_flow_id ON approval_steps(flow_id);
 CREATE INDEX idx_approval_history_flow_id ON approval_history(flow_id);
 CREATE INDEX idx_attached_files_target ON attached_files(target_type, target_id);
 
-INSERT INTO users (username, email, password_hash, full_name, department, position, user_type, is_active)
-VALUES ('admin', 'admin@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.s5uO8G', '管理者', 'IT企画部', '部長', 'ADMIN', TRUE);
+INSERT INTO users (username, email, password_hash, full_name, department, position, is_active)
+VALUES ('admin', 'admin@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.s5uO8G', '管理者', 'IT企画部', '部長', TRUE);
