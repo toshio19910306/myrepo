@@ -30,6 +30,7 @@ interface User {
   position?: string;
   user_type: string;
   company_name?: string;
+  permissions?: string[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -37,12 +38,14 @@ interface User {
 
 
 interface UpdateUserRequest {
-  full_name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   department?: string;
   position?: string;
   user_type?: string;
   company_name?: string;
+  permissions?: string[];
 }
 
 export default function UsersPage() {
@@ -71,12 +74,14 @@ export default function UsersPage() {
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   const [updateFormData, setUpdateFormData] = useState<UpdateUserRequest>({
-    full_name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     department: '',
     position: '',
     user_type: '',
     company_name: '',
+    permissions: [],
   });
 
   const fetchUsers = async () => {
@@ -224,6 +229,15 @@ export default function UsersPage() {
     }));
   };
 
+  const handleUpdatePermissionChange = (permission: string, checked: boolean) => {
+    setUpdateFormData(prev => ({
+      ...prev,
+      permissions: checked 
+        ? [...(prev.permissions || []), permission]
+        : (prev.permissions || []).filter(p => p !== permission)
+    }));
+  };
+
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
@@ -237,7 +251,16 @@ export default function UsersPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updateFormData),
+        body: JSON.stringify({
+          full_name: updateFormData.firstName && updateFormData.lastName 
+            ? `${updateFormData.lastName} ${updateFormData.firstName}` 
+            : undefined,
+          email: updateFormData.email,
+          department: updateFormData.department,
+          position: updateFormData.position,
+          user_type: updateFormData.user_type,
+          company_name: updateFormData.company_name,
+        }),
       });
 
       const result = await response.json();
@@ -295,13 +318,16 @@ export default function UsersPage() {
 
   const openUpdateModal = (user: User) => {
     setSelectedUser(user);
+    const nameParts = user.full_name.split(' ');
     setUpdateFormData({
-      full_name: user.full_name,
+      firstName: nameParts[1] || '',
+      lastName: nameParts[0] || '',
       email: user.email,
       department: user.department || '',
       position: user.position || '',
       user_type: user.user_type,
       company_name: user.company_name || '',
+      permissions: user.permissions || [],
     });
     setShowUpdateModal(true);
   };
@@ -578,44 +604,68 @@ export default function UsersPage() {
               <h2 className="text-2xl font-bold text-[#82A0AA] mb-6">ユーザー詳細</h2>
               
               <div className="space-y-4">
+                <div>
+                  <Label className="font-medium">ユーザーID</Label>
+                  <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.username}</p>
+                </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="font-medium">ユーザーID</Label>
-                    <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.user_id}</p>
+                    <Label className="font-medium">姓</Label>
+                    <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.full_name?.split(' ')[0] || '-'}</p>
                   </div>
                   <div>
-                    <Label className="font-medium">ユーザー名</Label>
-                    <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.username}</p>
+                    <Label className="font-medium">名</Label>
+                    <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.full_name?.split(' ')[1] || '-'}</p>
                   </div>
                 </div>
-                <div>
-                  <Label className="font-medium">氏名</Label>
-                  <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.full_name}</p>
-                </div>
+                
                 <div>
                   <Label className="font-medium">メールアドレス</Label>
                   <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.email}</p>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="font-medium">部署</Label>
+                    <Label className="font-medium">部門</Label>
                     <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.department || '-'}</p>
                   </div>
                   <div>
-                    <Label className="font-medium">役職</Label>
+                    <Label className="font-medium">職位</Label>
                     <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.position || '-'}</p>
                   </div>
                 </div>
+                
+                <div>
+                  <Label className="font-medium">権限</Label>
+                  <div className="mt-1 p-2 bg-gray-50 rounded">
+                    <div className="flex flex-wrap gap-2">
+                      {availablePermissions.map((permission) => (
+                        <Badge 
+                          key={permission} 
+                          variant={(selectedUser.permissions || []).includes(permission) ? 'default' : 'secondary'}
+                        >
+                          {permission}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="font-medium">ユーザータイプ</Label>
-                    <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.user_type}</p>
+                    <p className="mt-1 p-2 bg-gray-50 rounded">
+                      {selectedUser.user_type === 'admin' ? '管理者' : 
+                       selectedUser.user_type === 'approver' ? '承認者' : '一般ユーザー'}
+                    </p>
                   </div>
                   <div>
                     <Label className="font-medium">会社名</Label>
                     <p className="mt-1 p-2 bg-gray-50 rounded">{selectedUser.company_name || '-'}</p>
                   </div>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="font-medium">作成日</Label>
@@ -626,6 +676,7 @@ export default function UsersPage() {
                     <p className="mt-1 p-2 bg-gray-50 rounded">{new Date(selectedUser.updated_at).toLocaleString()}</p>
                   </div>
                 </div>
+                
                 <div>
                   <Label className="font-medium">ステータス</Label>
                   <p className="mt-1 p-2 bg-gray-50 rounded">
@@ -658,15 +709,27 @@ export default function UsersPage() {
               <h2 className="text-2xl font-bold text-[#82A0AA] mb-6">ユーザー情報更新</h2>
               
               <form onSubmit={handleUpdateUser} className="space-y-4">
-                <div>
-                  <Label htmlFor="update_full_name">氏名 *</Label>
-                  <Input
-                    id="update_full_name"
-                    type="text"
-                    value={updateFormData.full_name}
-                    onChange={(e) => handleUpdateInputChange('full_name', e.target.value)}
-                    required
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="update_lastName">姓 *</Label>
+                    <Input
+                      id="update_lastName"
+                      type="text"
+                      value={updateFormData.lastName}
+                      onChange={(e) => handleUpdateInputChange('lastName', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="update_firstName">名 *</Label>
+                    <Input
+                      id="update_firstName"
+                      type="text"
+                      value={updateFormData.firstName}
+                      onChange={(e) => handleUpdateInputChange('firstName', e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="update_email">メールアドレス *</Label>
@@ -679,7 +742,7 @@ export default function UsersPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="update_department">部署</Label>
+                  <Label htmlFor="update_department">部門</Label>
                   <Input
                     id="update_department"
                     type="text"
@@ -688,7 +751,7 @@ export default function UsersPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="update_position">役職</Label>
+                  <Label htmlFor="update_position">職位</Label>
                   <Input
                     id="update_position"
                     type="text"
@@ -717,6 +780,24 @@ export default function UsersPage() {
                     value={updateFormData.company_name}
                     onChange={(e) => handleUpdateInputChange('company_name', e.target.value)}
                   />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">権限</Label>
+                  <div className="mt-2 space-y-2">
+                    {availablePermissions.map((permission) => (
+                      <div key={permission} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`update_${permission}`}
+                          checked={(updateFormData.permissions || []).includes(permission)}
+                          onCheckedChange={(checked: boolean) => handleUpdatePermissionChange(permission, checked)}
+                        />
+                        <Label htmlFor={`update_${permission}`} className="text-sm">
+                          {permission}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {updateError && (
