@@ -119,9 +119,9 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="space-y-3">
                   {[
-                    { action: "承認", user: "田中部長", dept: "IT部", date: "2025-06-26 10:30" },
-                    { action: "上程", user: "佐藤課長", dept: "IT部", date: "2025-06-26 09:15" },
-                    { action: "申請", user: "山田主任", dept: "IT部", date: "2025-06-25 16:45" },
+                    { action: "承認", user: "管理者A", dept: "IT部", date: "2025-06-26 10:30" },
+                    { action: "上程", user: "管理者B", dept: "IT部", date: "2025-06-26 09:15" },
+                    { action: "申請", user: "管理者C", dept: "IT部", date: "2025-06-25 16:45" },
                   ].map((history, index) => (
                     <div key={index} className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>

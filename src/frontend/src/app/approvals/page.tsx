@@ -71,20 +71,20 @@ export default function ApprovalsPage() {
       type: "見積依頼",
       title: "新システム開発見積依頼",
       request_id: "REQ-001",
-      requester: "山田主任",
+      requester: "管理者C",
       department: "IT部",
       current_step: 2,
       total_steps: 3,
-      current_approver: "田中部長",
+      current_approver: "管理者A",
       current_approver_id: 1,
       status: "承認待ち",
       submitted_date: "2025-06-25",
       due_date: "2025-06-30",
       amount: "5,000,000円",
       history: [
-        { step: 1, action: "申請", user: "山田主任", date: "2025-06-25 16:45", status: "完了" },
-        { step: 2, action: "上程", user: "佐藤課長", date: "2025-06-26 09:15", status: "完了" },
-        { step: 3, action: "承認", user: "田中部長", date: "-", status: "待機中" }
+        { step: 1, action: "申請", user: "管理者C", date: "2025-06-25 16:45", status: "完了" },
+        { step: 2, action: "上程", user: "管理者B", date: "2025-06-26 09:15", status: "完了" },
+        { step: 3, action: "承認", user: "管理者A", date: "-", status: "待機中" }
       ]
     },
     {
@@ -92,19 +92,19 @@ export default function ApprovalsPage() {
       type: "見積回答",
       title: "インフラ構築見積回答",
       request_id: "RES-002",
-      requester: "佐藤課長",
+      requester: "管理者B",
       department: "IT部",
       current_step: 1,
       total_steps: 2,
-      current_approver: "佐藤課長",
+      current_approver: "管理者B",
       current_approver_id: 2,
       status: "承認待ち",
       submitted_date: "2025-06-26",
       due_date: "2025-07-01",
       amount: "2,900,000円",
       history: [
-        { step: 1, action: "申請", user: "佐藤課長", date: "2025-06-26 14:30", status: "完了" },
-        { step: 2, action: "承認", user: "佐藤課長", date: "-", status: "待機中" }
+        { step: 1, action: "申請", user: "管理者B", date: "2025-06-26 14:30", status: "完了" },
+        { step: 2, action: "承認", user: "管理者B", date: "-", status: "待機中" }
       ]
     },
     {
@@ -116,7 +116,7 @@ export default function ApprovalsPage() {
       department: "IT部",
       current_step: 1,
       total_steps: 2,
-      current_approver: "山田主任",
+      current_approver: "管理者C",
       current_approver_id: 3,
       status: "承認待ち",
       submitted_date: "2025-06-27",
@@ -124,7 +124,7 @@ export default function ApprovalsPage() {
       amount: "3,200,000円",
       history: [
         { step: 1, action: "申請", user: "高橋次郎", date: "2025-06-27 10:00", status: "完了" },
-        { step: 2, action: "承認", user: "山田主任", date: "-", status: "待機中" }
+        { step: 2, action: "承認", user: "管理者C", date: "-", status: "待機中" }
       ]
     },
     {
@@ -136,7 +136,7 @@ export default function ApprovalsPage() {
       department: "IT部",
       current_step: 1,
       total_steps: 3,
-      current_approver: "鈴木係長",
+      current_approver: "管理者D",
       current_approver_id: 4,
       status: "承認待ち",
       submitted_date: "2025-06-28",
@@ -144,7 +144,7 @@ export default function ApprovalsPage() {
       amount: "8,500,000円",
       history: [
         { step: 1, action: "申請", user: "伊藤三郎", date: "2025-06-28 11:30", status: "完了" },
-        { step: 2, action: "承認", user: "鈴木係長", date: "-", status: "待機中" }
+        { step: 2, action: "承認", user: "管理者D", date: "-", status: "待機中" }
       ]
     }
   ];

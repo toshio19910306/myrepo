@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "../../components/ui/checkbox";
-import dynamic from 'next/dynamic';
 
 interface NewUser {
   userId: string;
@@ -30,7 +29,7 @@ interface ApiUser {
   updated_at: string;
 }
 
-function UsersPage() {
+export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newUser, setNewUser] = useState<NewUser>({
@@ -43,19 +42,29 @@ function UsersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
 
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`);
+      console.log('Fetching users from API...');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Response status:', response.status);
       if (response.ok) {
         const apiResponse = await response.json();
+        console.log('API Response:', apiResponse);
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
           setUsers(apiResponse.data);
+          console.log('Users set:', apiResponse.data.length);
         }
       } else {
-        console.error('Failed to fetch users');
+        console.error('Failed to fetch users, status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -65,21 +74,8 @@ function UsersPage() {
   };
 
   useEffect(() => {
-    setMounted(true);
     fetchUsers();
   }, []);
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">読み込み中...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
 
   const filteredUsers = users.filter(user =>
@@ -137,8 +133,8 @@ function UsersPage() {
         });
         setShowCreateModal(false);
         alert("新規ユーザーが正常に作成されました。");
-        fetchUsers();
-      } else {
+        await fetchUsers();
+      }else {
         const errorData = await response.json();
         alert(`ユーザー作成に失敗しました: ${errorData.error?.message || 'Unknown error'}`);
       }
@@ -394,7 +390,3 @@ function UsersPage() {
     </div>
   );
 }
-
-export default dynamic(() => Promise.resolve(UsersPage), {
-  ssr: false
-});
