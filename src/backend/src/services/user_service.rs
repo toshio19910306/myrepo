@@ -55,6 +55,7 @@ pub struct CreateUserRequest {
     pub position: Option<String>,
     pub user_type: String,
     pub company_name: Option<String>,
+    pub permissions: Option<Vec<String>>,
 }
 
 pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<User> {

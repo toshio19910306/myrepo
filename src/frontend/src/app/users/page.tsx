@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,6 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from "../../components/ui/checkbox";
+
+interface NewUser {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  position: string;
+  permissions: string[];
+}
 
 interface User {
   user_id: number;
@@ -24,16 +35,6 @@ interface User {
   updated_at: string;
 }
 
-interface CreateUserRequest {
-  username: string;
-  email: string;
-  password: string;
-  full_name: string;
-  department?: string;
-  position?: string;
-  user_type: string;
-  company_name?: string;
-}
 
 interface UpdateUserRequest {
   full_name?: string;
@@ -45,32 +46,29 @@ interface UpdateUserRequest {
 }
 
 export default function UsersPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newUser, setNewUser] = useState<NewUser>({
+    userId: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    department: "",
+    position: "",
+    permissions: []
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [createLoading, setCreateLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [createSuccess, setCreateSuccess] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-
-  const [formData, setFormData] = useState<CreateUserRequest>({
-    username: '',
-    email: '',
-    password: '',
-    full_name: '',
-    department: '',
-    position: '',
-    user_type: 'user',
-    company_name: '',
-  });
 
   const [updateFormData, setUpdateFormData] = useState<UpdateUserRequest>({
     full_name: '',
@@ -84,20 +82,28 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/users?page=1&limit=50');
-      
-      if (!response.ok) {
-        throw new Error('ユーザー一覧の取得に失敗しました');
-      }
-
-      const result = await response.json();
-      if (result.success && Array.isArray(result.data)) {
-        setUsers(result.data);
+      console.log('Fetching users from API...');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Response status:', response.status);
+      if (response.ok) {
+        const apiResponse = await response.json();
+        console.log('API Response:', apiResponse);
+        if (apiResponse.success && Array.isArray(apiResponse.data)) {
+          setUsers(apiResponse.data);
+          console.log('Users set:', apiResponse.data.length);
+        }
       } else {
-        throw new Error('データの形式が正しくありません');
+        console.error('Failed to fetch users, status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } catch (error) {
+      console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
     }
@@ -127,47 +133,95 @@ export default function UsersPage() {
     fetchUsers();
   }, []);
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreateLoading(true);
-    setCreateError(null);
+  const filteredUsers = users.filter(user =>
+    user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.department && user.department.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.position && user.position.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
+  const availablePermissions = [
+    "仕様書管理",
+    "見積依頼", 
+    "見積回答",
+    "承認管理",
+    "ユーザー管理"
+  ];
+
+  const handleCreateUser = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleSaveUser = async () => {
+    if (!newUser.userId || !newUser.firstName || !newUser.lastName || !newUser.email) {
+      alert("ユーザーID、姓、名、メールアドレスは必須項目です。");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          username: newUser.userId,
+          full_name: `${newUser.lastName} ${newUser.firstName}`,
+          department: newUser.department,
+          position: newUser.position,
+          permissions: newUser.permissions,
+          email: newUser.email,
+          user_type: "IT",
+          password: "defaultPassword123"
+        }),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error?.message || 'ユーザーの作成に失敗しました');
+      if (response.ok) {
+        setNewUser({
+          userId: "",
+          firstName: "",
+          lastName: "",
+          email: "",
+          department: "",
+          position: "",
+          permissions: []
+        });
+        setShowCreateModal(false);
+        alert("新規ユーザーが正常に作成されました。");
+        await fetchUsers();
+      }else {
+        const errorData = await response.json();
+        alert(`ユーザー作成に失敗しました: ${errorData.error?.message || 'Unknown error'}`);
       }
-
-      setCreateSuccess(true);
-      setShowCreateForm(false);
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        full_name: '',
-        department: '',
-        position: '',
-        user_type: 'user',
-        company_name: '',
-      });
-      
-      await fetchUsers();
-      
-      setTimeout(() => setCreateSuccess(false), 3000);
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : 'エラーが発生しました');
+      console.error('Error creating user:', err);
+      alert('ユーザー作成中にエラーが発生しました。');
     } finally {
-      setCreateLoading(false);
+      setIsSubmitting(false);
     }
+  };
+
+  const handleCancelCreate = () => {
+    setShowCreateModal(false);
+    setNewUser({
+      userId: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      department: "",
+      position: "",
+      permissions: []
+    });
+  };
+
+  const handlePermissionChange = (permission: string, checked: boolean) => {
+    setNewUser(prev => ({
+      ...prev,
+      permissions: checked 
+        ? [...prev.permissions, permission]
+        : prev.permissions.filter(p => p !== permission)
+    }));
   };
 
   const handleUpdateUser = async (e: React.FormEvent) => {
@@ -235,10 +289,6 @@ export default function UsersPage() {
     }
   };
 
-  const handleInputChange = (field: keyof CreateUserRequest, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   const handleUpdateInputChange = (field: keyof UpdateUserRequest, value: string) => {
     setUpdateFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -276,13 +326,6 @@ export default function UsersPage() {
           </Alert>
         )}
 
-        {createSuccess && (
-          <Alert className="mb-6 border-green-200 bg-green-50">
-            <AlertDescription className="text-green-800">
-              ユーザーが正常に作成されました
-            </AlertDescription>
-          </Alert>
-        )}
 
         {updateSuccess && (
           <Alert className="mb-6 border-green-200 bg-green-50">
@@ -301,12 +344,25 @@ export default function UsersPage() {
         )}
 
         <div className="flex justify-between items-center mb-6">
-          <Button 
-            onClick={() => setShowCreateForm(true)}
-            className="bg-[#82A0AA] hover:bg-[#6B8A94] text-white"
-          >
-            新規ユーザー作成
-          </Button>
+          <div className="flex-1 max-w-md">
+            <Input
+              placeholder="ユーザーを検索..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div className="flex gap-2 ml-4">
+            <Button variant="outline">
+              CSVエクスポート
+            </Button>
+            <Button 
+              className="bg-[#82A0AA] hover:bg-[#6B8A94] text-white"
+              onClick={handleCreateUser}
+            >
+              新規ユーザー作成
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -335,7 +391,7 @@ export default function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {filteredUsers.map((user) => (
                     <TableRow key={user.user_id}>
                       <TableCell>{user.user_id}</TableCell>
                       <TableCell>{user.username}</TableCell>
@@ -345,7 +401,7 @@ export default function UsersPage() {
                       <TableCell>{user.position || '-'}</TableCell>
                       <TableCell>
                         <Badge variant={user.user_type === 'admin' ? 'default' : 'secondary'}>
-                          {user.user_type}
+                          {user.user_type === 'admin' ? '管理者' : user.user_type === 'approver' ? '承認者' : '一般ユーザー'}
                         </Badge>
                       </TableCell>
                       <TableCell>{user.company_name || '-'}</TableCell>
@@ -357,7 +413,7 @@ export default function UsersPage() {
                             size="sm"
                             onClick={() => fetchUserDetail(user.user_id)}
                           >
-                            詳細表示
+                            詳細
                           </Button>
                           <Button 
                             variant="outline" 
@@ -385,121 +441,132 @@ export default function UsersPage() {
         </Card>
 
         {/* 新規作成フォーム */}
-        {showCreateForm && (
+        {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-2xl font-bold text-[#82A0AA] mb-6">新規ユーザー作成</h2>
               
-              <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="username">ユーザー名 *</Label>
+                  <Label htmlFor="userId" className="text-sm font-medium">
+                    ユーザーID <span className="text-red-500">*</span>
+                  </Label>
                   <Input
-                    id="username"
+                    id="userId"
                     type="text"
-                    value={formData.username}
-                    onChange={(e) => handleInputChange('username', e.target.value)}
-                    required
+                    value={newUser.userId}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, userId: e.target.value }))}
+                    placeholder="ユーザーIDを入力"
+                    className="mt-1"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="full_name">氏名 *</Label>
-                  <Input
-                    id="full_name"
-                    type="text"
-                    value={formData.full_name}
-                    onChange={(e) => handleInputChange('full_name', e.target.value)}
-                    required
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="lastName" className="text-sm font-medium">
+                      姓 <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      value={newUser.lastName}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, lastName: e.target.value }))}
+                      placeholder="姓を入力"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="firstName" className="text-sm font-medium">
+                      名 <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      value={newUser.firstName}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, firstName: e.target.value }))}
+                      placeholder="名を入力"
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <Label htmlFor="email">メールアドレス *</Label>
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    メールアドレス <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="email"
                     type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    required
+                    value={newUser.email}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="メールアドレスを入力"
+                    className="mt-1"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="password">パスワード *</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="department">部署</Label>
+                  <Label htmlFor="department" className="text-sm font-medium">
+                    部門
+                  </Label>
                   <Input
                     id="department"
                     type="text"
-                    value={formData.department}
-                    onChange={(e) => handleInputChange('department', e.target.value)}
+                    value={newUser.department}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, department: e.target.value }))}
+                    placeholder="部門を入力"
+                    className="mt-1"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="position">役職</Label>
+                  <Label htmlFor="position" className="text-sm font-medium">
+                    職位
+                  </Label>
                   <Input
                     id="position"
                     type="text"
-                    value={formData.position}
-                    onChange={(e) => handleInputChange('position', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="user_type">ユーザータイプ *</Label>
-                  <Select value={formData.user_type} onValueChange={(value) => handleInputChange('user_type', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">一般ユーザー</SelectItem>
-                      <SelectItem value="approver">承認者</SelectItem>
-                      <SelectItem value="admin">管理者</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="company_name">会社名</Label>
-                  <Input
-                    id="company_name"
-                    type="text"
-                    value={formData.company_name}
-                    onChange={(e) => handleInputChange('company_name', e.target.value)}
+                    value={newUser.position}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, position: e.target.value }))}
+                    placeholder="職位を入力"
+                    className="mt-1"
                   />
                 </div>
 
-                {createError && (
-                  <Alert className="border-red-200 bg-red-50">
-                    <AlertDescription className="text-red-800">
-                      {createError}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="flex gap-2">
-                  <Button 
-                    type="submit" 
-                    disabled={createLoading}
-                    className="bg-[#82A0AA] hover:bg-[#6B8A94] text-white"
-                  >
-                    {createLoading ? '作成中...' : '作成'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setCreateError(null);
-                    }}
-                  >
-                    キャンセル
-                  </Button>
+                <div>
+                  <Label className="text-sm font-medium">権限</Label>
+                  <div className="mt-2 space-y-2">
+                    {availablePermissions.map((permission) => (
+                      <div key={permission} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={permission}
+                          checked={newUser.permissions.includes(permission)}
+                          onCheckedChange={(checked: boolean) => handlePermissionChange(permission, checked)}
+                        />
+                        <Label htmlFor={permission} className="text-sm">
+                          {permission}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </form>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelCreate}
+                  disabled={isSubmitting}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  onClick={handleSaveUser}
+                  disabled={isSubmitting}
+                  className="bg-[#82A0AA] hover:bg-[#6B8A94] text-white"
+                >
+                  {isSubmitting ? "作成中..." : "保存"}
+                </Button>
+              </div>
             </div>
           </div>
         )}
