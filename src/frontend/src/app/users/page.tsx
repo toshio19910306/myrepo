@@ -17,6 +17,7 @@ interface NewUser {
   email: string;
   department: string;
   position: string;
+  userType: string;
   permissions: string[];
 }
 
@@ -27,6 +28,7 @@ interface User {
   full_name: string;
   department?: string;
   position?: string;
+  user_type?: string;
   permissions?: string[];
   is_active: boolean;
   created_at: string;
@@ -53,6 +55,7 @@ export default function UsersPage() {
     email: "",
     department: "",
     position: "",
+    userType: "IT",
     permissions: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -158,20 +161,25 @@ export default function UsersPage() {
 
     setIsSubmitting(true);
     try {
+      const requestPayload = {
+        username: newUser.userId,
+        full_name: `${newUser.lastName} ${newUser.firstName}`,
+        department: newUser.department,
+        position: newUser.position,
+        user_type: newUser.userType,
+        permissions: newUser.permissions,
+        email: newUser.email,
+        password: "defaultPassword123"
+      };
+      
+      console.log('Frontend sending payload:', JSON.stringify(requestPayload, null, 2));
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          username: newUser.userId,
-          full_name: `${newUser.lastName} ${newUser.firstName}`,
-          department: newUser.department,
-          position: newUser.position,
-          permissions: newUser.permissions,
-          email: newUser.email,
-          password: "defaultPassword123"
-        }),
+        body: JSON.stringify(requestPayload),
       });
 
       if (response.ok) {
@@ -182,6 +190,7 @@ export default function UsersPage() {
           email: "",
           department: "",
           position: "",
+          userType: "IT",
           permissions: []
         });
         setShowCreateModal(false);
@@ -208,6 +217,7 @@ export default function UsersPage() {
       email: "",
       department: "",
       position: "",
+      userType: "IT",
       permissions: []
     });
   };
@@ -413,6 +423,8 @@ export default function UsersPage() {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.department || '-'}</TableCell>
                       <TableCell>{user.position || '-'}</TableCell>
+                      <TableCell>{user.user_type || '-'}</TableCell>
+                      <TableCell>-</TableCell>
                       <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -538,6 +550,22 @@ export default function UsersPage() {
                     placeholder="職位を入力"
                     className="mt-1"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="userType" className="text-sm font-medium">
+                    ユーザータイプ <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="userType"
+                    value={newUser.userType}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, userType: e.target.value }))}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#82A0AA] focus:border-[#82A0AA]"
+                  >
+                    <option value="IT">IT</option>
+                    <option value="VENDOR">VENDOR</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
                 </div>
 
                 <div>
