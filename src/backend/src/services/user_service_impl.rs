@@ -9,7 +9,7 @@ pub async fn get_all_users(pool: &PgPool, page: i32, per_page: i32) -> Result<Ve
     let offset = (page - 1) * per_page;
     
     let users = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at 
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at 
          FROM users 
          WHERE is_active = true 
          ORDER BY created_at DESC
@@ -25,7 +25,7 @@ pub async fn get_all_users(pool: &PgPool, page: i32, per_page: i32) -> Result<Ve
 
 pub async fn get_user_by_id(pool: &PgPool, user_id: i32) -> Result<Option<User>> {
     let user = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at 
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at 
          FROM users 
          WHERE user_id = $1"
     )
@@ -54,7 +54,7 @@ pub async fn delete_user(pool: &PgPool, user_id: i32) -> Result<bool> {
 
 pub async fn get_user_by_username(pool: &PgPool, username: &str) -> Result<Option<User>> {
     let user = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at 
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at 
          FROM users 
          WHERE username = $1 AND is_active = true"
     )
@@ -67,7 +67,7 @@ pub async fn get_user_by_username(pool: &PgPool, username: &str) -> Result<Optio
 
 pub async fn get_users_by_type(pool: &PgPool, _user_type: Option<String>) -> Result<Vec<User>> {
     let users = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at
          FROM users 
          WHERE is_active = true
          ORDER BY full_name"
@@ -80,7 +80,7 @@ pub async fn get_users_by_type(pool: &PgPool, _user_type: Option<String>) -> Res
 
 pub async fn get_user_with_password(pool: &PgPool, username: &str) -> Result<Option<(User, String)>> {
     let result = sqlx::query(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at 
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at 
          FROM users 
          WHERE username = $1 AND is_active = true"
     )
@@ -97,6 +97,7 @@ pub async fn get_user_with_password(pool: &PgPool, username: &str) -> Result<Opt
             full_name: row.get("full_name"),
             department: row.get("department"),
             position: row.get("position"),
+            user_type: row.get("user_type"),
             is_active: row.get("is_active"),
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),

@@ -16,7 +16,7 @@ pub struct UpdateUserRequest {
 pub async fn get_all_users(pool: &PgPool, page: i32, limit: i32) -> Result<Vec<User>> {
     let offset = (page - 1) * limit;
     let users = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at 
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at 
          FROM users 
          WHERE is_active = true 
          ORDER BY created_at DESC
@@ -32,7 +32,7 @@ pub async fn get_all_users(pool: &PgPool, page: i32, limit: i32) -> Result<Vec<U
 
 pub async fn get_user_by_id(pool: &PgPool, id: i32) -> Result<Option<User>> {
     let user = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at 
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at 
          FROM users 
          WHERE user_id = $1 AND is_active = true"
     )
@@ -51,6 +51,7 @@ pub struct CreateUserRequest {
     pub full_name: String,
     pub department: Option<String>,
     pub position: Option<String>,
+    pub user_type: String,
     pub permissions: Option<Vec<String>>,
 }
 
@@ -59,9 +60,9 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
         .map_err(|e| anyhow::anyhow!("Failed to hash password: {}", e))?;
 
     let user = sqlx::query_as::<_, User>(
-        "INSERT INTO users (username, email, password_hash, full_name, department, position, is_active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at"
+        "INSERT INTO users (username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         RETURNING user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at"
     )
     .bind(&request.username)
     .bind(&request.email)
@@ -69,6 +70,7 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     .bind(&request.full_name)
     .bind(&request.department)
     .bind(&request.position)
+    .bind(&request.user_type)
     .bind(true)
     .bind(Utc::now())
     .bind(Utc::now())
@@ -87,7 +89,7 @@ pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest
          position = COALESCE($5, position),
          updated_at = $6
          WHERE user_id = $1 AND is_active = true
-         RETURNING user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at"
+         RETURNING user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at"
     )
     .bind(user_id)
     .bind(&request.full_name)
@@ -103,7 +105,7 @@ pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest
 
 pub async fn get_users_by_type(pool: &PgPool, _user_type: Option<String>) -> Result<Vec<User>> {
     let users = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at 
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at 
          FROM users 
          WHERE is_active = true
          ORDER BY created_at DESC"
@@ -128,7 +130,7 @@ pub async fn delete_user(pool: &PgPool, id: i32) -> Result<bool> {
 
 pub async fn get_user_by_username(pool: &PgPool, username: &str) -> Result<Option<User>> {
     let user = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, is_active, created_at, updated_at 
+        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, is_active, created_at, updated_at 
          FROM users 
          WHERE username = $1 AND is_active = true"
     )
