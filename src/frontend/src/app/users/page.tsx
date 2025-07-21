@@ -109,13 +109,25 @@ export default function UsersPage() {
 
   const fetchUserDetail = async (userId: number) => {
     try {
-      const response = await fetch(`/api/users/${userId}`);
+      console.log(`Fetching user detail for ID: ${userId}`);
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log(`User detail response status: ${response.status}`);
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('User detail error response:', errorText);
         throw new Error('ユーザー詳細の取得に失敗しました');
       }
 
       const result = await response.json();
+      console.log('User detail result:', result);
+      
       if (result.success && result.data) {
         setSelectedUser(result.data);
         setShowDetailModal(true);
@@ -123,6 +135,7 @@ export default function UsersPage() {
         throw new Error('ユーザーが見つかりません');
       }
     } catch (err) {
+      console.error('fetchUserDetail error:', err);
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
     }
   };
@@ -242,26 +255,35 @@ export default function UsersPage() {
     setUpdateError(null);
 
     try {
+      const requestPayload = {
+        full_name: updateFormData.firstName && updateFormData.lastName 
+          ? `${updateFormData.lastName} ${updateFormData.firstName}` 
+          : undefined,
+        email: updateFormData.email,
+        department: updateFormData.department,
+        position: updateFormData.position,
+      };
+      
+      console.log(`Updating user ${selectedUser.user_id} with payload:`, requestPayload);
+      
       const response = await fetch(`/api/users/${selectedUser.user_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          full_name: updateFormData.firstName && updateFormData.lastName 
-            ? `${updateFormData.lastName} ${updateFormData.firstName}` 
-            : undefined,
-          email: updateFormData.email,
-          department: updateFormData.department,
-          position: updateFormData.position,
-        }),
+        body: JSON.stringify(requestPayload),
       });
 
-      const result = await response.json();
-
+      console.log(`Update response status: ${response.status}`);
+      
       if (!response.ok) {
-        throw new Error(result.error?.message || 'ユーザーの更新に失敗しました');
+        const errorText = await response.text();
+        console.error('Update error response:', errorText);
+        throw new Error('ユーザーの更新に失敗しました');
       }
+
+      const result = await response.json();
+      console.log('Update result:', result);
 
       setUpdateSuccess(true);
       setShowUpdateModal(false);
@@ -271,6 +293,7 @@ export default function UsersPage() {
       
       setTimeout(() => setUpdateSuccess(false), 3000);
     } catch (err) {
+      console.error('handleUpdateUser error:', err);
       setUpdateError(err instanceof Error ? err.message : 'エラーが発生しました');
     } finally {
       setUpdateLoading(false);
@@ -285,21 +308,31 @@ export default function UsersPage() {
     setDeleteLoading(true);
 
     try {
+      console.log(`Deleting user ID: ${userId}`);
       const response = await fetch(`/api/users/${userId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      const result = await response.json();
+      console.log(`Delete response status: ${response.status}`);
 
       if (!response.ok) {
-        throw new Error(result.error?.message || 'ユーザーの削除に失敗しました');
+        const errorText = await response.text();
+        console.error('Delete error response:', errorText);
+        throw new Error('ユーザーの削除に失敗しました');
       }
+
+      const result = await response.json();
+      console.log('Delete result:', result);
 
       setDeleteSuccess(true);
       await fetchUsers();
       
       setTimeout(() => setDeleteSuccess(false), 3000);
     } catch (err) {
+      console.error('handleDeleteUser error:', err);
       setError(err instanceof Error ? err.message : 'エラーが発生しました');
     } finally {
       setDeleteLoading(false);
