@@ -3,6 +3,10 @@ name = "estimate-request-backend"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "estimate_request_backend"
+path = "src/lib.rs"
+
 [dependencies]
 axum = { version = "0.7", features = ["multipart"] }
 tokio = { version = "1.0", features = ["full"] }
@@ -23,3 +27,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15"
 reqwest = { version = "0.11", features = ["json"] }
 rust_decimal = { version = "1.33", features = ["serde", "db-postgres"] }
+
+[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }

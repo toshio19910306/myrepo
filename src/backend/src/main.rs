@@ -12,44 +12,7 @@ use tracing::{info, Level};
 use tracing_subscriber;
 use sqlx::PgPool;
 
-mod config;
-mod models;
-mod handlers {
-    pub mod users;
-    pub mod specifications;
-    pub mod requests;
-    pub mod responses;
-    pub mod approvals;
-    pub mod approval_history;
-    pub mod files;
-    // pub mod auth; // Temporarily disabled
-}
-mod services {
-    pub mod specification_service;
-    pub mod specification_service_impl;
-    pub mod estimate_request_service;
-    pub mod estimate_request_service_impl;
-    pub mod estimate_response_service;
-    pub mod estimate_response_service_impl;
-    pub mod approval_service;
-    pub mod approval_service_impl;
-    pub mod file_service;
-    pub mod user_service;
-    pub mod user_service_impl;
-    // pub mod auth_service; // Temporarily disabled
-    // pub mod email_service; // Temporarily disabled
-}
-mod middleware;
-mod utils;
-mod database;
-
-use config::Config;
-
-#[derive(Clone)]
-pub struct AppState {
-    pub config: Arc<Config>,
-    pub db_pool: PgPool,
-}
+use estimate_request_backend::{AppState, config::Config, handlers, database};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
