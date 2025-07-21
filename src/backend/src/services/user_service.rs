@@ -51,7 +51,6 @@ pub struct CreateUserRequest {
     pub full_name: String,
     pub department: Option<String>,
     pub position: Option<String>,
-    pub user_type: String,
     pub permissions: Option<Vec<String>>,
 }
 
@@ -70,7 +69,7 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     .bind(&request.full_name)
     .bind(&request.department)
     .bind(&request.position)
-    .bind(&request.user_type)
+    .bind("IT")
     .bind(true)
     .bind(Utc::now())
     .bind(Utc::now())
