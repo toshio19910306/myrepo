@@ -43,7 +43,7 @@ pub async fn get_user_by_id(pool: &PgPool, id: i32) -> Result<Option<User>> {
     Ok(user)
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct CreateUserRequest {
     pub username: String,
     pub email: String,
