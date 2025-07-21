@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>見積回答作成 - 見積管理システム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav a:hover, .nav a.active {
+            background-color: #34495e;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+        }
+        
+        .breadcrumb {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .user-info {
+            background-color: #e8f4fd;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .form-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .required {
+            color: #e74c3c;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .readonly-section {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 4px;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .readonly-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+        
+        .readonly-content {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+        
+        .file-upload {
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            padding: 2rem;
+            text-align: center;
+            background-color: #fafafa;
+            transition: border-color 0.3s;
+        }
+        
+        .file-upload:hover {
+            border-color: #3498db;
+        }
+        
+        .file-upload input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload-label {
+            cursor: pointer;
+            color: #3498db;
+            font-weight: 500;
+        }
+        
+        .file-list {
+            margin-top: 1rem;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-item button {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .approval-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        
+        .approval-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        
+        .approval-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .step-number {
+            background-color: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: 600;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .step-assignee {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #229954;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+        
+        .btn-outline:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background-color: #e67e22;
+            color: white;
+            margin-left: 1rem;
+        }
+        
+        .estimate-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        
+        .estimate-summary h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .summary-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+        }
+        
+        .summary-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>見積管理システム</h1>
+        <nav class="nav">
+            <a href="#">見積依頼一覧</a>
+            <a href="#" class="active">見積回答一覧</a>
+            <a href="#">ユーザー管理</a>
+            <a href="#">設定</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <div class="breadcrumb">
+                    <a href="#">見積回答一覧</a> &gt; 見積作成
+                </div>
+                <h2 class="page-title">見積回答作成 <span class="status-indicator">見積中</span></h2>
+            </div>
+            <div class="user-info">
+                <strong>ベンダー:</strong> 株式会社ABC | <strong>担当者:</strong> 山田太郎
+            </div>
+        </div>
+
+        <div class="estimate-summary">
+            <h3>依頼内容サマリー</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">依頼番号</div>
+                    <div class="summary-value">REQ-2024-002</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">件名</div>
+                    <div class="summary-value">在庫管理システム改修</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">IT部門担当者</div>
+                    <div class="summary-value">佐藤花子</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">回答期限</div>
+                    <div class="summary-value">2024-06-20</div>
+                </div>
+            </div>
+        </div>
+
+        <form>
+            <div class="form-section">
+                <h3 class="section-title">依頼内容詳細（参照のみ）</h3>
+                <div class="readonly-section">
+                    <div class="readonly-title">発注内容</div>
+                    <div class="readonly-content">
+                        既存の在庫管理システムに以下の機能を追加・改修してください：<br>
+                        1. リアルタイム在庫更新機能<br>
+                        2. 自動発注機能（在庫下限設定）<br>
+                        3. 在庫レポート機能の強化<br>
+                        4. モバイル対応（タブレット・スマートフォン）<br>
+                        5. 既存ERPシステムとの連携強化
+                    </div>
+                </div>
+                <div class="readonly-section" style="margin-top: 1rem;">
+                    <div class="readonly-title">備考</div>
+                    <div class="readonly-content">
+                        現行システムはJava + Oracle DBで構築されています。<br>
+                        開発期間は3ヶ月を想定しており、段階的なリリースも検討可能です。
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">見積回答</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="estimate-number">見積番号 <span class="required">*</span></label>
+                        <input type="text" id="estimate-number" name="estimate-number" placeholder="見積番号を入力" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="estimate-price">見積価格（円） <span class="required">*</span></label>
+                        <input type="number" id="estimate-price" name="estimate-price" placeholder="見積価格を入力" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="estimate-remarks">備考</label>
+                        <textarea id="estimate-remarks" name="estimate-remarks" placeholder="見積に関する備考があれば記載してください"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">見積書添付</h3>
+                <div class="file-upload">
+                    <input type="file" id="estimate-file" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    <label for="estimate-file" class="file-upload-label">
+                        📄 見積書ファイルを選択<br>
+                        <small>対応形式: PDF, Word, Excel (最大10MB)</small>
+                    </label>
+                </div>
+                <div class="file-list">
+                    <div class="file-item">
+                        <span>見積書_在庫管理システム改修_20240615.pdf (3.2MB)</span>
+                        <button type="button">削除</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-title">承認フロー</h3>
+                <div class="approval-section">
+                    <div class="approval-title">承認ステップ</div>
+                    <div class="approval-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">営業部長承認</div>
+                            <div class="step-assignee">承認者: 営業部長</div>
+                        </div>
+                    </div>
+                    <div class="approval-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">最終承認</div>
+                            <div class="step-assignee">承認者: 取締役</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <a href="#" class="btn btn-outline">キャンセル</a>
+                <button type="button" class="btn btn-secondary">下書き保存</button>
+                <button type="submit" class="btn btn-primary">保存</button>
+                <button type="button" class="btn btn-success">上程</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
