@@ -65,89 +65,6 @@ export default function ApprovalsPage() {
     }
   }, [currentUser, fetchApprovals]);
 
-  const mockApprovals = [
-    {
-      id: "APP-001",
-      type: "見積依頼",
-      title: "新システム開発見積依頼",
-      request_id: "REQ-001",
-      requester: "管理者C",
-      department: "IT部",
-      current_step: 2,
-      total_steps: 3,
-      current_approver: "管理者A",
-      current_approver_id: 1,
-      status: "承認待ち",
-      submitted_date: "2025-06-25",
-      due_date: "2025-06-30",
-      amount: "5,000,000円",
-      history: [
-        { step: 1, action: "申請", user: "管理者C", date: "2025-06-25 16:45", status: "完了" },
-        { step: 2, action: "上程", user: "管理者B", date: "2025-06-26 09:15", status: "完了" },
-        { step: 3, action: "承認", user: "管理者A", date: "-", status: "待機中" }
-      ]
-    },
-    {
-      id: "APP-002",
-      type: "見積回答",
-      title: "インフラ構築見積回答",
-      request_id: "RES-002",
-      requester: "管理者B",
-      department: "IT部",
-      current_step: 1,
-      total_steps: 2,
-      current_approver: "管理者B",
-      current_approver_id: 2,
-      status: "承認待ち",
-      submitted_date: "2025-06-26",
-      due_date: "2025-07-01",
-      amount: "2,900,000円",
-      history: [
-        { step: 1, action: "申請", user: "管理者B", date: "2025-06-26 14:30", status: "完了" },
-        { step: 2, action: "承認", user: "管理者B", date: "-", status: "待機中" }
-      ]
-    },
-    {
-      id: "APP-004",
-      type: "見積依頼",
-      title: "ネットワーク機器更新",
-      request_id: "REQ-004",
-      requester: "高橋次郎",
-      department: "IT部",
-      current_step: 1,
-      total_steps: 2,
-      current_approver: "管理者C",
-      current_approver_id: 3,
-      status: "承認待ち",
-      submitted_date: "2025-06-27",
-      due_date: "2025-07-02",
-      amount: "3,200,000円",
-      history: [
-        { step: 1, action: "申請", user: "高橋次郎", date: "2025-06-27 10:00", status: "完了" },
-        { step: 2, action: "承認", user: "管理者C", date: "-", status: "待機中" }
-      ]
-    },
-    {
-      id: "APP-005",
-      type: "見積依頼",
-      title: "クラウド移行プロジェクト",
-      request_id: "REQ-005",
-      requester: "伊藤三郎",
-      department: "IT部",
-      current_step: 1,
-      total_steps: 3,
-      current_approver: "管理者D",
-      current_approver_id: 4,
-      status: "承認待ち",
-      submitted_date: "2025-06-28",
-      due_date: "2025-07-03",
-      amount: "8,500,000円",
-      history: [
-        { step: 1, action: "申請", user: "伊藤三郎", date: "2025-06-28 11:30", status: "完了" },
-        { step: 2, action: "承認", user: "管理者D", date: "-", status: "待機中" }
-      ]
-    }
-  ];
 
   const handleBulkApproval = async () => {
     if (selectedApprovals.length === 0) return;
@@ -247,7 +164,7 @@ export default function ApprovalsPage() {
     }
   };
 
-  const displayApprovals = approvals.length > 0 ? approvals : mockApprovals;
+  const displayApprovals = approvals;
   
   const filteredApprovals = displayApprovals.filter((approval: ApprovalItem) => {
     const isCurrentUserApprover = currentUser && (
