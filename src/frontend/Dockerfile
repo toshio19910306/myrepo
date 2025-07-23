@@ -30,7 +30,6 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy built application from builder stage
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/next.config.ts ./
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
