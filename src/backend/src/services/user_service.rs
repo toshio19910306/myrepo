@@ -100,40 +100,13 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
 }
 
 pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest) -> Result<Option<User>> {
-    println!("DEBUG: update_user called with user_id: {}, request: {:?}", user_id, request);
-    
     let permissions_json = if let Some(permissions) = &request.permissions {
         Some(serde_json::to_value(permissions)
             .map_err(|e| anyhow::anyhow!("Failed to serialize permissions: {}", e))?)
     } else {
         None
     };
-    
-    println!("DEBUG: permissions_json: {:?}", permissions_json);
 
-    let existing_user = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, permissions, is_active, created_at, updated_at 
-         FROM users 
-         WHERE user_id = $1"
-    )
-    .bind(user_id)
-    .fetch_optional(pool)
-    .await?;
-    
-    println!("DEBUG: existing_user query result: {:?}", existing_user);
-    
-    if let Some(ref user) = existing_user {
-        println!("DEBUG: User found - user_id: {}, is_active: {}, permissions: {:?}", user.user_id, user.is_active, user.permissions);
-        if !user.is_active {
-            println!("DEBUG: User is not active, UPDATE will not match");
-            return Ok(None);
-        }
-    } else {
-        println!("DEBUG: No user found with user_id: {}", user_id);
-        return Ok(None);
-    }
-
-    println!("DEBUG: Executing UPDATE query with user_id: {}", user_id);
     let user = sqlx::query_as::<_, User>(
         "UPDATE users SET 
          full_name = COALESCE($2, full_name),
@@ -155,7 +128,6 @@ pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest
     .fetch_optional(pool)
     .await?;
 
-    println!("DEBUG: UPDATE query result: {:?}", user);
     Ok(user)
 }
 
