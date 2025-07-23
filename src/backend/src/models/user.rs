@@ -12,6 +12,7 @@ pub struct User {
     pub department: Option<String>,
     pub position: Option<String>,
     pub user_type: String,
+    pub permissions: Option<serde_json::Value>,
     pub is_active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

@@ -98,6 +98,7 @@ pub async fn get_user_with_password(pool: &PgPool, username: &str) -> Result<Opt
             department: row.get("department"),
             position: row.get("position"),
             user_type: row.get("user_type"),
+            permissions: row.get("permissions"),
             is_active: row.get("is_active"),
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),
