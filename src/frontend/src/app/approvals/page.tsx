@@ -435,20 +435,26 @@ export default function ApprovalsPage() {
               </button>
             </div>
             <div className="space-y-4">
-              {selectedApproval.history.map((step: {step: number, action: string, user: string, date: string, status: string}, index: number) => (
-                <div key={index} className="border-b pb-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">ステップ {step.step}: {step.action}</span>
-                    <span className={`px-2 py-1 rounded text-xs ${getStepStatusColor(step.status)}`}>
-                      {step.status}
-                    </span>
+              {selectedApproval.history && selectedApproval.history.length > 0 ? (
+                selectedApproval.history.map((step: {step: number, action: string, user: string, date: string, status: string}, index: number) => (
+                  <div key={index} className="border-b pb-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">ステップ {step.step}: {step.action}</span>
+                      <span className={`px-2 py-1 rounded text-xs ${getStepStatusColor(step.status)}`}>
+                        {step.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">担当者: {step.user}</p>
+                    {step.date !== "-" && (
+                      <p className="text-sm text-gray-500">日時: {step.date}</p>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600">担当者: {step.user}</p>
-                  {step.date !== "-" && (
-                    <p className="text-sm text-gray-500">日時: {step.date}</p>
-                  )}
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">履歴データがありません</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
