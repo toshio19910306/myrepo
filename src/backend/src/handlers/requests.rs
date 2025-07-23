@@ -10,7 +10,7 @@ use validator::Validate;
 
 use crate::{
     models::{CreateEstimateRequestRequest, UpdateEstimateRequestRequest},
-    services::estimate_request_service,
+    services::{estimate_request_service, user_service, email_service},
     utils::response::{ApiResponse, ErrorResponse},
     AppState,
 };
@@ -527,6 +527,23 @@ async fn submit_request_for_approval(
             timestamp: chrono::Utc::now().to_rfc3339(),
         }))
     })?;
+
+    if !state.config.sendgrid_api_key.is_empty() {
+        let email_service = email_service::EmailService::new(state.config.sendgrid_api_key.clone());
+        
+        for approver_id in &payload.approver_ids {
+            if let Ok(Some(approver)) = user_service::get_user_by_id(&state.db_pool, *approver_id).await {
+                let _ = email_service.send_approval_notification(
+                    &approver.email,
+                    &approver.full_name,
+                    &format!("見積依頼の承認依頼: {}", updated_request.as_ref().unwrap().subject),
+                    "見積依頼",
+                    &updated_request.as_ref().unwrap().subject,
+                    &updated_request.as_ref().unwrap().created_by.to_string()
+                ).await;
+            }
+        }
+    }
 
     tx.commit().await.map_err(|e| {
         (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse {
