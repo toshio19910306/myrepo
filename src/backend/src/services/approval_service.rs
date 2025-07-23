@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::Utc;
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use serde_json;
 
 use crate::models::{ApprovalFlow, CreateApprovalFlowRequest, ApprovalActionRequest};
