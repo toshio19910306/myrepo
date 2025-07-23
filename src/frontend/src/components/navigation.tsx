@@ -2,9 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/contexts/UserContext";
 
 const navigationItems = [
   { href: "/dashboard", label: "ダッシュボード" },
@@ -17,6 +18,8 @@ const navigationItems = [
 
 export function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useUser();
 
   return (
     <nav className="bg-card border-b border-border">
@@ -44,7 +47,14 @@ export function Navigation() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                logout();
+                router.push('/login');
+              }}
+            >
               ログアウト
             </Button>
           </div>

@@ -156,39 +156,77 @@ async fn create_approval_flow(
 }
 
 async fn approve(
-    State(_state): State<AppState>,
-    Path(_id): Path<String>,
+    State(state): State<AppState>,
+    Path(id): Path<String>,
     Json(payload): Json<ApprovalActionRequest>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
-    Ok(Json(ApiResponse {
-        success: true,
-        data: Some(json!({
-            "approval_id": _id,
-            "action": "approve",
-            "comments": payload.comments,
-            "processed_at": chrono::Utc::now().to_rfc3339()
+    let comments = payload.comments.clone();
+    match approval_service::process_approval_action(&state.db_pool, id.parse().unwrap_or(0), ApprovalActionRequest {
+        approver_id: payload.approver_id,
+        action: "approved".to_string(),
+        comments: comments.clone(),
+    }).await {
+        Ok(flow) => Ok(Json(ApiResponse {
+            success: true,
+            data: Some(json!({
+                "approval_id": id,
+                "action": "approved",
+                "status": "APPROVED",
+                "comments": comments,
+                "processed_at": chrono::Utc::now().to_rfc3339()
+            })),
+            message: "承認処理が完了しました".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
         })),
-        message: "承認処理が完了しました".to_string(),
-        timestamp: chrono::Utc::now().to_rfc3339(),
-    }))
+        Err(e) => Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({
+                    "code": "APPROVAL_ERROR",
+                    "message": e.to_string()
+                }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        ))
+    }
 }
 
 async fn reject(
-    State(_state): State<AppState>,
-    Path(_id): Path<String>,
+    State(state): State<AppState>,
+    Path(id): Path<String>,
     Json(payload): Json<ApprovalActionRequest>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
-    Ok(Json(ApiResponse {
-        success: true,
-        data: Some(json!({
-            "approval_id": _id,
-            "action": "reject",
-            "comments": payload.comments,
-            "processed_at": chrono::Utc::now().to_rfc3339()
+    let comments = payload.comments.clone();
+    match approval_service::process_approval_action(&state.db_pool, id.parse().unwrap_or(0), ApprovalActionRequest {
+        approver_id: payload.approver_id,
+        action: "rejected".to_string(),
+        comments: comments.clone(),
+    }).await {
+        Ok(flow) => Ok(Json(ApiResponse {
+            success: true,
+            data: Some(json!({
+                "approval_id": id,
+                "action": "rejected",
+                "status": "REJECTED",
+                "comments": comments,
+                "processed_at": chrono::Utc::now().to_rfc3339()
+            })),
+            message: "差し戻し処理が完了しました".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
         })),
-        message: "差し戻し処理が完了しました".to_string(),
-        timestamp: chrono::Utc::now().to_rfc3339(),
-    }))
+        Err(e) => Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({
+                    "code": "REJECTION_ERROR",
+                    "message": e.to_string()
+                }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        ))
+    }
 }
 
 async fn withdraw(

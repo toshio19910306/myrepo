@@ -41,7 +41,7 @@ export default function ApprovalsPage() {
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const currentUserParam = currentUser ? `?current_user_id=${currentUser.id}` : '';
+      const currentUserParam = currentUser ? `?current_user_id=${currentUser.id}` : '?current_user_id=1';
       const response = await fetch(`${apiUrl}/api/approvals${currentUserParam}`);
       if (response.ok) {
         const apiResponse = await response.json();
@@ -60,10 +60,8 @@ export default function ApprovalsPage() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (currentUser) {
-      fetchApprovals();
-    }
-  }, [currentUser, fetchApprovals]);
+    fetchApprovals();
+  }, [fetchApprovals]);
 
 
   const handleBulkApproval = async () => {
