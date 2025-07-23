@@ -262,6 +262,7 @@ export default function UsersPage() {
         email: updateFormData.email,
         department: updateFormData.department,
         position: updateFormData.position,
+        permissions: updateFormData.permissions,
       };
       
       console.log(`Updating user ${selectedUser.user_id} with payload:`, requestPayload);
