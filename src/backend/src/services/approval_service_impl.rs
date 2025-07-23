@@ -2,7 +2,8 @@ use anyhow::Result;
 use chrono::Utc;
 use sqlx::{PgPool, Row};
 
-use crate::models::{ApprovalFlow, ApprovalStep, ApprovalHistory, CreateApprovalFlowRequest, ApprovalActionRequest};
+use crate::models::{ApprovalFlow, CreateApprovalFlowRequest, ApprovalActionRequest};
+use crate::models::approval_extended::{ApprovalStep, ApprovalHistory};
 // use crate::services::email_service::EmailService; // Temporarily disabled
 
 pub async fn create_approval_flow(
@@ -77,12 +78,18 @@ pub async fn process_approval_action(
         return Err(anyhow::anyhow!("承認者が一致しません"));
     }
 
+    let action_type = match request.action.as_str() {
+        "approved" => "APPROVE",
+        "rejected" => "REJECT",
+        _ => return Err(anyhow::anyhow!("無効なアクションです: {}", request.action)),
+    };
+
     sqlx::query(
         "UPDATE approval_steps 
          SET action_type = $1, comments = $2, approved_at = $3, updated_at = $4
          WHERE step_id = $5"
     )
-    .bind(&request.action.to_uppercase())
+    .bind(action_type)
     .bind(&request.comments)
     .bind(Utc::now())
     .bind(Utc::now())
@@ -129,7 +136,7 @@ pub async fn process_approval_action(
         } else {
             sqlx::query_as::<_, ApprovalFlow>(
                 "UPDATE approval_flows 
-                 SET status = 'approved', updated_at = $1
+                 SET status = 'APPROVED', updated_at = $1
                  WHERE flow_id = $2
                  RETURNING flow_id, target_type, target_id, current_step, status, created_by, created_at, updated_at"
             )
@@ -141,7 +148,7 @@ pub async fn process_approval_action(
     } else {
         sqlx::query_as::<_, ApprovalFlow>(
             "UPDATE approval_flows 
-             SET status = 'rejected', updated_at = $1
+             SET status = 'REJECTED', updated_at = $1
              WHERE flow_id = $2
              RETURNING flow_id, target_type, target_id, current_step, status, created_by, created_at, updated_at"
         )

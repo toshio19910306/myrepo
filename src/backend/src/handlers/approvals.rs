@@ -161,7 +161,14 @@ async fn approve(
     Json(payload): Json<ApprovalActionRequest>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
     let comments = payload.comments.clone();
-    match approval_service::process_approval_action(&state.db_pool, id.parse().unwrap_or(0), ApprovalActionRequest {
+    
+    let flow_id = if id.starts_with("APP-") {
+        id.strip_prefix("APP-").unwrap_or("0").parse().unwrap_or(0)
+    } else {
+        id.parse().unwrap_or(0)
+    };
+    
+    match approval_service::process_approval_action(&state.db_pool, flow_id, ApprovalActionRequest {
         approver_id: payload.approver_id,
         action: "approved".to_string(),
         comments: comments.clone(),
@@ -198,7 +205,14 @@ async fn reject(
     Json(payload): Json<ApprovalActionRequest>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
     let comments = payload.comments.clone();
-    match approval_service::process_approval_action(&state.db_pool, id.parse().unwrap_or(0), ApprovalActionRequest {
+    
+    let flow_id = if id.starts_with("APP-") {
+        id.strip_prefix("APP-").unwrap_or("0").parse().unwrap_or(0)
+    } else {
+        id.parse().unwrap_or(0)
+    };
+    
+    match approval_service::process_approval_action(&state.db_pool, flow_id, ApprovalActionRequest {
         approver_id: payload.approver_id,
         action: "rejected".to_string(),
         comments: comments.clone(),

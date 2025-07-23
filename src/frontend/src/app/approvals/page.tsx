@@ -111,7 +111,7 @@ export default function ApprovalsPage() {
         },
         body: JSON.stringify({
           approver_id: 1,
-          action: "approve",
+          action: "approved",
           comments: "承認しました"
         })
       });
@@ -141,7 +141,7 @@ export default function ApprovalsPage() {
         },
         body: JSON.stringify({
           approver_id: 1,
-          action: "reject",
+          action: "rejected",
           comments: "差し戻しました"
         })
       });
