@@ -172,7 +172,7 @@ export default function UsersPage() {
     setIsSubmitting(true);
     try {
       const requestPayload = {
-        userid: newUser.userId,
+        username: newUser.userId,
         full_name: `${newUser.lastName} ${newUser.firstName}`,
         department: newUser.department,
         position: newUser.position,

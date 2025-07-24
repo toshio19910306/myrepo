@@ -163,9 +163,23 @@ async fn approve(
     let comments = payload.comments.clone();
     
     let flow_id = if id.starts_with("APP-") {
-        id.strip_prefix("APP-").unwrap_or("0").parse().unwrap_or(0)
+        match id.strip_prefix("APP-").unwrap_or("0").parse::<i32>() {
+            Ok(parsed_id) => parsed_id,
+            Err(_) => return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "INVALID_ID", "message": "無効な承認IDです"}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            })))
+        }
     } else {
-        id.parse().unwrap_or(0)
+        match id.parse::<i32>() {
+            Ok(parsed_id) => parsed_id,
+            Err(_) => return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "INVALID_ID", "message": "無効な承認IDです"}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            })))
+        }
     };
     
     match approval_service::process_approval_action(&state.db_pool, flow_id, ApprovalActionRequest {
@@ -207,9 +221,23 @@ async fn reject(
     let comments = payload.comments.clone();
     
     let flow_id = if id.starts_with("APP-") {
-        id.strip_prefix("APP-").unwrap_or("0").parse().unwrap_or(0)
+        match id.strip_prefix("APP-").unwrap_or("0").parse::<i32>() {
+            Ok(parsed_id) => parsed_id,
+            Err(_) => return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "INVALID_ID", "message": "無効な承認IDです"}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            })))
+        }
     } else {
-        id.parse().unwrap_or(0)
+        match id.parse::<i32>() {
+            Ok(parsed_id) => parsed_id,
+            Err(_) => return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "INVALID_ID", "message": "無効な承認IDです"}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            })))
+        }
     };
     
     match approval_service::process_approval_action(&state.db_pool, flow_id, ApprovalActionRequest {
