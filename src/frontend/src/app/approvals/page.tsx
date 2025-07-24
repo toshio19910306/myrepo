@@ -110,14 +110,15 @@ export default function ApprovalsPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          approver_id: 1,
+          approver_id: currentUser?.id || 1,
           action: "approved",
           comments: "承認しました"
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to approve');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to approve');
       }
 
       const data = await response.json();
@@ -140,14 +141,15 @@ export default function ApprovalsPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          approver_id: 1,
+          approver_id: currentUser?.id || 1,
           action: "rejected",
           comments: "差し戻しました"
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to reject');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to reject');
       }
 
       const data = await response.json();
@@ -283,11 +285,7 @@ export default function ApprovalsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-1">金額</h4>
-                      <p className="text-sm font-medium">{approval.amount}</p>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
                       <h4 className="font-medium text-sm text-muted-foreground mb-1">申請日</h4>
                       <p className="text-sm">{approval.submitted_date}</p>
@@ -408,10 +406,6 @@ export default function ApprovalsPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700">申請者</label>
                 <p className="mt-1 text-sm text-gray-900">{selectedApproval.requester}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">金額</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedApproval.amount}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">ステータス</label>

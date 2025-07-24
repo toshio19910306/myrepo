@@ -81,7 +81,7 @@ export default function UsersPage() {
     try {
       setLoading(true);
       console.log('Fetching users from API...');
-      const response = await fetch(`/api/users`, {
+      const response = await fetch(`/api/users?include_deleted=true`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -340,6 +340,45 @@ export default function UsersPage() {
     }
   };
 
+  const handleRestoreUser = async (userId: number) => {
+    if (!confirm('このユーザーを復元してもよろしいですか？')) {
+      return;
+    }
+
+    setDeleteLoading(true);
+
+    try {
+      console.log(`Restoring user ID: ${userId}`);
+      const response = await fetch(`/api/users/${userId}/restore`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log(`Restore response status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Restore error response:', errorText);
+        throw new Error('ユーザーの復元に失敗しました');
+      }
+
+      const result = await response.json();
+      console.log('Restore result:', result);
+
+      setDeleteSuccess(true);
+      await fetchUsers();
+      
+      setTimeout(() => setDeleteSuccess(false), 3000);
+    } catch (err) {
+      console.error('handleRestoreUser error:', err);
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handleUpdateInputChange = (field: keyof UpdateUserRequest, value: string) => {
     setUpdateFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -431,7 +470,7 @@ export default function UsersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
-                    <TableHead>ユーザー名</TableHead>
+                    <TableHead>ユーザーID</TableHead>
                     <TableHead>氏名</TableHead>
                     <TableHead>メールアドレス</TableHead>
                     <TableHead>部署</TableHead>
@@ -444,7 +483,7 @@ export default function UsersPage() {
                   {filteredUsers.map((user) => (
                     <TableRow key={user.user_id}>
                       <TableCell>{user.user_id}</TableCell>
-                      <TableCell>{user.username}</TableCell>
+                      <TableCell>{user.user_id}</TableCell>
                       <TableCell>{user.full_name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.department || '-'}</TableCell>
@@ -452,28 +491,42 @@ export default function UsersPage() {
                       <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => fetchUserDetail(user.user_id)}
-                          >
-                            詳細
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => openUpdateModal(user)}
-                          >
-                            更新
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDeleteUser(user.user_id)}
-                            disabled={deleteLoading}
-                          >
-                            削除
-                          </Button>
+                          {user.is_active ? (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => fetchUserDetail(user.user_id)}
+                              >
+                                詳細
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => openUpdateModal(user)}
+                              >
+                                更新
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDeleteUser(user.user_id)}
+                                disabled={deleteLoading}
+                              >
+                                削除
+                              </Button>
+                            </>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-green-600 hover:text-green-700"
+                              onClick={() => handleRestoreUser(user.user_id)}
+                              disabled={deleteLoading}
+                            >
+                              復元
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

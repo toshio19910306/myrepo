@@ -740,8 +740,7 @@ export default function RequestsPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">希望納期 *</label>
                   <input
-                    type="text"
-                    placeholder="YYYY-MM-DD (例: 2025-02-15)"
+                    type="date"
                     value={newRequest.dueDate}
                     onChange={(e) => {
                       const dateValue = e.target.value;
@@ -749,6 +748,7 @@ export default function RequestsPage() {
                       setNewRequest(prev => ({ ...prev, dueDate: dateValue }));
                     }}
                     className="w-full p-2 border border-gray-300 rounded-md"
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
 

@@ -24,6 +24,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(get_users).post(create_user))
         .route("/:id", get(get_user_by_id).put(update_user).delete(delete_user))
+        .route("/:id/restore", put(restore_user))
         .route("/approvers", get(get_approvers))
 }
 
@@ -280,6 +281,36 @@ async fn create_user(
                     "code": "USER_CREATION_FAILED",
                     "message": e.to_string()
                 }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
+}
+
+async fn restore_user(
+    State(state): State<AppState>,
+    Path(user_id): Path<i32>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    match user_service::restore_user(&state.db_pool, user_id).await {
+        Ok(true) => Ok(Json(ApiResponse {
+            success: true,
+            data: Some(json!({"user_id": user_id})),
+            message: "ユーザーが正常に復元されました".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        })),
+        Ok(false) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "USER_NOT_FOUND", "message": "ユーザーが見つかりません"}),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({"code": "RESTORE_FAILED", "message": "ユーザーの復元に失敗しました"}),
                 timestamp: chrono::Utc::now().to_rfc3339(),
             }),
         )),

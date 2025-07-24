@@ -19,7 +19,6 @@ pub async fn get_all_users(pool: &PgPool, page: i32, limit: i32) -> Result<Vec<U
     let users = sqlx::query_as::<_, User>(
         "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, permissions, is_active, created_at, updated_at 
          FROM users 
-         WHERE is_active = true 
          ORDER BY created_at DESC
          LIMIT $1 OFFSET $2"
     )
@@ -149,6 +148,18 @@ pub async fn delete_user(pool: &PgPool, id: i32) -> Result<bool> {
         "UPDATE users SET is_active = false, updated_at = $2 WHERE user_id = $1 AND is_active = true"
     )
     .bind(id)
+    .bind(Utc::now())
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
+}
+
+pub async fn restore_user(pool: &PgPool, user_id: i32) -> Result<bool> {
+    let result = sqlx::query(
+        "UPDATE users SET is_active = true, updated_at = $2 WHERE user_id = $1"
+    )
+    .bind(user_id)
     .bind(Utc::now())
     .execute(pool)
     .await?;
