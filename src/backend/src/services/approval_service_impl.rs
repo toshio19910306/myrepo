@@ -158,6 +158,25 @@ pub async fn process_approval_action(
         .await?
     };
 
+    if approval_flow.target_type == "REQUEST" {
+        let new_status = match approval_flow.status.as_str() {
+            "APPROVED" => "APPROVED",
+            "REJECTED" => "REJECTED", 
+            _ => "PENDING_APPROVAL"
+        };
+        
+        sqlx::query(
+            "UPDATE estimate_requests 
+             SET status = $1, updated_at = $2
+             WHERE request_id = $3"
+        )
+        .bind(new_status)
+        .bind(Utc::now())
+        .bind(approval_flow.target_id)
+        .execute(&mut *tx)
+        .await?;
+    }
+
     tx.commit().await?;
 
     Ok(approval_flow)

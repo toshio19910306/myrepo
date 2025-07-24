@@ -63,12 +63,12 @@ export default function NewResponsePage() {
       ...prev,
       response_date: todayStr,
       delivery_date: futureDateStr,
-      estimate_number: "EST-2025-001",
-      estimate_price: "1500000",
-      total_amount: "1650000",
-      validity_period: "30日間",
-      terms_conditions: "支払い条件：納品後30日以内\n保証期間：1年間\n変更要求：仕様変更は別途見積もり",
-      response_remarks: "技術スタック：React, Node.js, PostgreSQL\n開発期間：約3ヶ月\nチーム構成：フロントエンド2名、バックエンド2名"
+      estimate_number: "",
+      estimate_price: "",
+      total_amount: "",
+      validity_period: "",
+      terms_conditions: "",
+      response_remarks: ""
     }));
   }, []);
 
