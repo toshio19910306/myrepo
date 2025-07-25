@@ -149,7 +149,7 @@ pub async fn get_approved_requests(pool: &PgPool) -> Result<Vec<EstimateRequest>
                 er.created_by, er.created_at, er.updated_at
          FROM estimate_requests er
          INNER JOIN approval_flows af ON af.target_type = 'REQUEST' AND af.target_id = er.request_id
-         WHERE af.status = 'APPROVED'
+         WHERE af.status = 'APPROVED' AND er.status = 'RESPONDED'
          ORDER BY er.created_at DESC"
     )
     .fetch_all(pool)

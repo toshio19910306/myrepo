@@ -160,8 +160,8 @@ pub async fn process_approval_action(
 
     if approval_flow.target_type == "REQUEST" {
         let new_status = match approval_flow.status.as_str() {
-            "APPROVED" => "APPROVED",
-            "REJECTED" => "REJECTED", 
+            "APPROVED" => "RESPONDED",
+            "REJECTED" => "CLOSED", 
             _ => "PENDING_APPROVAL"
         };
         
