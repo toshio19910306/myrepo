@@ -471,8 +471,8 @@ async fn submit_request_for_approval(
     let updated_request = sqlx::query_as::<_, crate::models::EstimateRequest>(
         "UPDATE estimate_requests 
          SET status = $1, updated_at = $2
-         WHERE request_id = $3 AND status = 'DRAFT'
-         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, status, created_by, created_at, updated_at"
+         WHERE request_id = $3 AND status IN ('DRAFT', 'CLOSED')
+         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_name, status, created_by, created_at, updated_at"
     )
     .bind("PENDING_APPROVAL")
     .bind(chrono::Utc::now())

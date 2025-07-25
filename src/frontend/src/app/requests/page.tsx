@@ -15,6 +15,7 @@ interface EstimateRequest {
   budget_range_min: number | null;
   budget_range_max: number | null;
   requirements: string | null;
+  vendor_name: string | null;
   status: string;
   created_by: number;
   created_at: string;
@@ -30,6 +31,7 @@ interface EditingRequest {
   budget_range_min: number | null;
   budget_range_max: number | null;
   requirements: string | null;
+  vendor_name: string | null;
   status: string;
   created_by: number;
   created_at: string;
@@ -84,7 +86,8 @@ export default function RequestsPage() {
     title: "",
     description: "",
     dueDate: "",
-    specId: ""
+    specId: "",
+    vendorName: ""
   });
   const [specifications, setSpecifications] = useState<Specification[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -159,7 +162,7 @@ export default function RequestsPage() {
       case "DRAFT": return "下書き";
       case "SUBMITTED": return "提出済み";
       case "PENDING_APPROVAL": return "承認待ち";
-      case "RESPONDED": return "回答済み";
+      case "RESPONDED": return "承認済み";
       case "CLOSED": return "終了";
       default: return status;
     }
@@ -234,7 +237,8 @@ export default function RequestsPage() {
         deadline: formattedDate,
         attachment_ids: attachmentIds,
         created_by: 1,
-        spec_id: newRequest.specId ? parseInt(newRequest.specId) : null
+        spec_id: newRequest.specId ? parseInt(newRequest.specId) : null,
+        vendor_name: newRequest.vendorName || null
       };
       
       console.log('Final request data being sent:', requestData);
@@ -257,7 +261,8 @@ export default function RequestsPage() {
         title: '',
         description: '',
         dueDate: '',
-        specId: ''
+        specId: '',
+        vendorName: ''
       });
       setSelectedFiles([]);
       setShowCreateModal(false);
@@ -293,7 +298,8 @@ export default function RequestsPage() {
       title: "",
       description: "",
       dueDate: "",
-      specId: ""
+      specId: "",
+      vendorName: ""
     });
     setSelectedFiles([]);
   };
@@ -308,7 +314,8 @@ export default function RequestsPage() {
         setEditingRequest({
           ...data.data,
           title: data.data.subject,
-          dueDate: data.data.deadline ? data.data.deadline.split('T')[0] : ''
+          dueDate: data.data.deadline ? data.data.deadline.split('T')[0] : '',
+          vendor_name: data.data.vendor_name
         });
         
         console.log('Fetching files for request ID:', request.request_id);
@@ -385,7 +392,8 @@ export default function RequestsPage() {
         subject: editingRequest.title,
         description: editingRequest.description,
         deadline: editingRequest.dueDate,
-        spec_id: editingRequest.spec_id || null
+        spec_id: editingRequest.spec_id || null,
+        vendor_name: editingRequest.vendor_name || null
       };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${editingRequest.request_id}`, {
@@ -675,6 +683,15 @@ export default function RequestsPage() {
                           承認申請
                         </Button>
                       )}
+                      {(request.status === "SUBMITTED" || request.status === "CLOSED") && (
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                          onClick={() => handleApprovalRequest(request.request_id)}
+                        >
+                          承認申請
+                        </Button>
+                      )}
                       {request.status === "DRAFT" && (
                         <Button 
                           variant="outline" 
@@ -735,6 +752,16 @@ export default function RequestsPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">ベンダー名</label>
+                  <Input
+                    value={newRequest.vendorName}
+                    onChange={(e) => setNewRequest(prev => ({ ...prev, vendorName: e.target.value }))}
+                    placeholder="ベンダー名を入力してください（任意）"
+                    className="w-full"
+                  />
                 </div>
 
                 <div>
@@ -860,6 +887,16 @@ export default function RequestsPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">ベンダー名</label>
+                  <Input
+                    value={editingRequest.vendor_name || ""}
+                    onChange={(e) => setEditingRequest((prev) => prev ? ({ ...prev, vendor_name: e.target.value }) : null)}
+                    placeholder="ベンダー名を入力してください（任意）"
+                    className="w-full"
+                  />
                 </div>
 
                 <div>
