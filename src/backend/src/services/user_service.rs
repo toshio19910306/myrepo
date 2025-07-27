@@ -51,6 +51,7 @@ pub struct CreateUserRequest {
     pub full_name: String,
     pub department: Option<String>,
     pub position: Option<String>,
+    pub user_type: Option<String>,
     pub permissions: Option<Vec<String>>,
 }
 
@@ -69,6 +70,8 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     
     println!("Permissions JSON: {:?}", permissions_json);
 
+    let user_type = request.user_type.as_deref().unwrap_or("IT");
+    
     println!("Executing SQL query...");
     let user = sqlx::query_as::<_, User>(
         "INSERT INTO users (username, email, password_hash, full_name, department, position, user_type, permissions, is_active, created_at, updated_at)
@@ -81,7 +84,7 @@ pub async fn create_user(pool: &PgPool, request: CreateUserRequest) -> Result<Us
     .bind(&request.full_name)
     .bind(&request.department)
     .bind(&request.position)
-    .bind("IT")
+    .bind(user_type)
     .bind(permissions_json)
     .bind(true)
     .bind(Utc::now())
@@ -130,15 +133,27 @@ pub async fn update_user(pool: &PgPool, user_id: i32, request: UpdateUserRequest
     Ok(user)
 }
 
-pub async fn get_users_by_type(pool: &PgPool, _user_type: Option<String>) -> Result<Vec<User>> {
-    let users = sqlx::query_as::<_, User>(
-        "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, permissions, is_active, created_at, updated_at 
-         FROM users 
-         WHERE is_active = true
-         ORDER BY created_at DESC"
-    )
-    .fetch_all(pool)
-    .await?;
+pub async fn get_users_by_type(pool: &PgPool, user_type_filter: Option<String>) -> Result<Vec<User>> {
+    let users = if let Some(user_type) = user_type_filter {
+        sqlx::query_as::<_, User>(
+            "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, permissions, is_active, created_at, updated_at 
+             FROM users 
+             WHERE user_type = $1 AND is_active = true
+             ORDER BY created_at DESC"
+        )
+        .bind(user_type)
+        .fetch_all(pool)
+        .await?
+    } else {
+        sqlx::query_as::<_, User>(
+            "SELECT user_id, username, email, password_hash, full_name, department, position, user_type, permissions, is_active, created_at, updated_at 
+             FROM users 
+             WHERE is_active = true
+             ORDER BY created_at DESC"
+        )
+        .fetch_all(pool)
+        .await?
+    };
 
     Ok(users)
 }

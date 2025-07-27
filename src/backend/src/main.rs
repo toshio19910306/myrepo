@@ -36,7 +36,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let frontend_url = std::env::var("FRONTEND_URL")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+        .unwrap_or_else(|_| "http://localhost:3004".to_string());
     
     let cors_origin = if frontend_url.contains("@") {
         let parts: Vec<&str> = frontend_url.split("@").collect();

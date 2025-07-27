@@ -27,3 +27,78 @@ pub async fn delete_response(pool: &PgPool, response_id: i32) -> Result<bool> {
 pub async fn submit_response(pool: &PgPool, response_id: i32) -> Result<Option<EstimateResponse>> {
     estimate_response_service_impl::submit_response(pool, response_id).await
 }
+
+pub async fn approve_response(
+    db_pool: &PgPool,
+    response_id: i32,
+    _payload: serde_json::Value,
+) -> Result<serde_json::Value> {
+    let updated_response = sqlx::query_as!(
+        EstimateResponse,
+        r#"
+        UPDATE estimate_responses 
+        SET status = 'approved', updated_at = NOW()
+        WHERE response_id = $1
+        RETURNING *
+        "#,
+        response_id
+    )
+    .fetch_one(db_pool)
+    .await?;
+
+    Ok(serde_json::to_value(updated_response)?)
+}
+
+pub async fn reject_response(
+    db_pool: &PgPool,
+    response_id: i32,
+    _payload: serde_json::Value,
+) -> Result<serde_json::Value> {
+    let updated_response = sqlx::query_as!(
+        EstimateResponse,
+        r#"
+        UPDATE estimate_responses 
+        SET status = 'rejected', updated_at = NOW()
+        WHERE response_id = $1
+        RETURNING *
+        "#,
+        response_id
+    )
+    .fetch_one(db_pool)
+    .await?;
+
+    Ok(serde_json::to_value(updated_response)?)
+}
+
+pub async fn get_pending_approvals(
+    db_pool: &PgPool,
+) -> Result<Vec<serde_json::Value>> {
+    let responses = sqlx::query_as!(
+        EstimateResponse,
+        r#"
+        SELECT * FROM estimate_responses 
+        WHERE status = 'submitted'
+        ORDER BY created_at DESC
+        "#
+    )
+    .fetch_all(db_pool)
+    .await?;
+
+    let mut approvals = Vec::new();
+    for response in responses {
+        let approval_item = serde_json::json!({
+            "response_id": response.response_id,
+            "estimate_number": response.estimate_number,
+            "estimate_price": response.estimate_price,
+            "vendor_name": "ベンダー名",
+            "request_subject": "見積依頼件名",
+            "status": "pending",
+            "submitted_date": response.created_at,
+            "current_approver": "承認者名",
+            "current_approver_id": 1
+        });
+        approvals.push(approval_item);
+    }
+
+    Ok(approvals)
+}

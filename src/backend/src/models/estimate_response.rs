@@ -7,21 +7,21 @@ use rust_decimal::Decimal;
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct EstimateResponse {
     pub response_id: i32,
-    pub request_id: i32,
+    pub request_id: Option<i32>,
     pub vendor_id: Option<i32>,
     pub estimate_number: Option<String>,
     pub estimate_price: Option<Decimal>,
     pub total_amount: Option<Decimal>,
-    pub breakdown: Option<serde_json::Value>,
+    pub breakdown: Option<String>,
     pub delivery_date: Option<chrono::NaiveDate>,
     pub validity_period: Option<String>,
     pub terms_conditions: Option<String>,
     pub response_remarks: Option<String>,
     pub response_date: Option<chrono::NaiveDate>,
-    pub status: String,
-    pub created_by: i32,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub status: Option<String>,
+    pub created_by: Option<i32>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize, Validate)]

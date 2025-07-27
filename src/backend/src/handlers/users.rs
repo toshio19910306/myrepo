@@ -18,6 +18,7 @@ use crate::{
 pub struct UserQuery {
     pub page: Option<i32>,
     pub limit: Option<i32>,
+    pub user_type: Option<String>,
 }
 
 pub fn routes() -> Router<AppState> {
@@ -35,7 +36,13 @@ async fn get_users(
     let page = query.page.unwrap_or(1);
     let limit = query.limit.unwrap_or(50);
 
-    match user_service::get_all_users(&state.db_pool, page, limit).await {
+    let result = if query.user_type.is_some() {
+        user_service::get_users_by_type(&state.db_pool, query.user_type).await
+    } else {
+        user_service::get_all_users(&state.db_pool, page, limit).await
+    };
+
+    match result {
         Ok(users) => {
             let user_data: Vec<serde_json::Value> = users
                 .into_iter()

@@ -12,6 +12,8 @@ const navigationItems = [
   { href: "/specifications", label: "仕様書管理" },
   { href: "/requests", label: "見積依頼" },
   { href: "/responses", label: "見積回答" },
+  { href: "/response-approvals", label: "見積回答承認管理" },
+  { href: "/vendors", label: "ベンダー管理" },
   { href: "/approvals", label: "承認管理" },
   { href: "/users", label: "ユーザー管理" },
 ];
