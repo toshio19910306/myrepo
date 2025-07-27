@@ -442,7 +442,7 @@ export default function EditResponsePage() {
                             onChange={handleFileUpload}
                           />
                         </label>
-                        <p className="pl-1">またはドラッグ&ドロップ</p>
+                        <p className="pl-1">またはドラッグ&amp;ドロップ</p>
                       </div>
                       <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
                     </div>
