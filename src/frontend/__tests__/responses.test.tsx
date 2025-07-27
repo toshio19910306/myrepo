@@ -24,10 +24,9 @@ describe('ResponsesPage', () => {
 
     render(<ResponsesPage />);
     
-    expect(screen.getByText('見積回答')).toBeInTheDocument();
-    expect(screen.getByText('見積回答に対する回答を管理します')).toBeInTheDocument();
-    
     await waitFor(() => {
+      expect(screen.getByText('見積回答')).toBeInTheDocument();
+      expect(screen.getByText('見積回答に対する回答を管理します')).toBeInTheDocument();
       expect(screen.getByText('見積回答がありません')).toBeInTheDocument();
     });
   });
@@ -55,8 +54,8 @@ describe('ResponsesPage', () => {
     
     await waitFor(() => {
       expect(screen.getByText('EST-2025-001')).toBeInTheDocument();
-      expect(screen.getByText('¥1,500,000')).toBeInTheDocument();
-      expect(screen.getByText('¥1,650,000')).toBeInTheDocument();
+      expect(screen.getByText('￥1,500,000')).toBeInTheDocument();
+      expect(screen.getByText('￥1,650,000')).toBeInTheDocument();
     });
   });
 
