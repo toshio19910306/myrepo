@@ -75,22 +75,27 @@ export default function EditResponsePage() {
   useEffect(() => {
     const fetchResponse = async () => {
       try {
-        const response = await fetch(`/api/responses/${responseId}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}`);
         if (response.ok) {
           const data = await response.json();
-          setResponse(data);
-          setFormData({
-            request_id: data.request_id?.toString() || "",
-            vendor_id: data.vendor_id?.toString() || "",
-            estimate_number: data.estimate_number || "",
-            estimate_price: data.estimate_price?.toString() || "",
-            total_amount: data.total_amount?.toString() || "",
-            delivery_date: data.delivery_date || "",
-            validity_period: data.validity_period || "",
-            terms_conditions: data.terms_conditions || "",
-            response_remarks: data.response_remarks || "",
-            response_date: data.response_date || "",
-          });
+          if (data.success && data.data) {
+            const responseData = data.data;
+            setResponse(responseData);
+            setFormData({
+              request_id: responseData.request_id?.toString() || "",
+              vendor_id: responseData.vendor_id?.toString() || "",
+              estimate_number: responseData.estimate_number || "",
+              estimate_price: responseData.estimate_price?.toString() || "",
+              total_amount: responseData.total_amount?.toString() || "",
+              delivery_date: responseData.delivery_date || "",
+              validity_period: responseData.validity_period || "",
+              terms_conditions: responseData.terms_conditions || "",
+              response_remarks: responseData.response_remarks || "",
+              response_date: responseData.response_date || "",
+            });
+          } else {
+            setError("見積回答の取得に失敗しました");
+          }
         } else {
           setError("見積回答の取得に失敗しました");
         }
@@ -101,10 +106,12 @@ export default function EditResponsePage() {
 
     const fetchApprovedRequests = async () => {
       try {
-        const response = await fetch("/api/requests/approved");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved`);
         if (response.ok) {
           const data = await response.json();
-          setApprovedRequests(data);
+          if (data.success && Array.isArray(data.data)) {
+            setApprovedRequests(data.data);
+          }
         }
       } catch {
         console.error("承認済み見積依頼の取得に失敗しました");
@@ -113,10 +120,12 @@ export default function EditResponsePage() {
 
     const fetchVendors = async () => {
       try {
-        const response = await fetch("/api/users");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users?user_type=VENDOR`);
         if (response.ok) {
           const data = await response.json();
-          setVendors(data);
+          if (data.success && Array.isArray(data.data)) {
+            setVendors(data.data);
+          }
         }
       } catch {
         console.error("ベンダー情報の取得に失敗しました");
@@ -146,7 +155,7 @@ export default function EditResponsePage() {
       formData.append("target_id", responseId);
 
       try {
-        const response = await fetch("/api/files/upload", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
           method: "POST",
           body: formData,
         });
@@ -173,7 +182,7 @@ export default function EditResponsePage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/responses/${responseId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
