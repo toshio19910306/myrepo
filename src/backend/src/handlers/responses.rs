@@ -26,6 +26,9 @@ pub fn routes() -> Router<AppState> {
         .route("/", get(get_responses).post(create_response))
         .route("/:id", get(get_response).put(update_response).delete(delete_response))
         .route("/:id/submit", post(submit_response))
+        .route("/:id/approve", post(approve_response))
+        .route("/:id/reject", post(reject_response))
+        .route("/pending-approvals", get(get_pending_approvals))
         .route("/bulk-evaluate", post(bulk_evaluate_responses))
 }
 
@@ -345,4 +348,80 @@ async fn bulk_evaluate_responses(
         message: format!("{}件の見積回答を一括評価しました", payload.response_ids.len()),
         timestamp: chrono::Utc::now().to_rfc3339(),
     }))
+}
+
+async fn approve_response(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+    Json(payload): Json<serde_json::Value>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    match estimate_response_service::approve_response(&state.db_pool, id, payload).await {
+        Ok(response) => Ok(Json(ApiResponse {
+            success: true,
+            data: Some(response),
+            message: "見積回答を承認しました".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        })),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({
+                    "code": "APPROVAL_ERROR",
+                    "message": format!("見積回答の承認に失敗しました: {}", e)
+                }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
+}
+
+async fn reject_response(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+    Json(payload): Json<serde_json::Value>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ErrorResponse>)> {
+    match estimate_response_service::reject_response(&state.db_pool, id, payload).await {
+        Ok(response) => Ok(Json(ApiResponse {
+            success: true,
+            data: Some(response),
+            message: "見積回答を差し戻しました".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        })),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({
+                    "code": "REJECTION_ERROR",
+                    "message": format!("見積回答の差し戻しに失敗しました: {}", e)
+                }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
+}
+
+async fn get_pending_approvals(
+    State(state): State<AppState>,
+) -> Result<Json<ApiResponse<Vec<serde_json::Value>>>, (StatusCode, Json<ErrorResponse>)> {
+    match estimate_response_service::get_pending_approvals(&state.db_pool).await {
+        Ok(approvals) => Ok(Json(ApiResponse {
+            success: true,
+            data: Some(approvals),
+            message: "承認待ち見積回答一覧を取得しました".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        })),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({
+                    "code": "FETCH_ERROR",
+                    "message": format!("承認待ち見積回答一覧の取得に失敗しました: {}", e)
+                }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
 }
