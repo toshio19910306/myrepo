@@ -276,7 +276,7 @@ export default function ResponsesPage() {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            {response.status === "draft" && (
+                            {(response.status === "draft" || response.status === "rejected") && (
                               <Button
                                 size="sm"
                                 className="bg-blue-600 hover:bg-blue-700"
