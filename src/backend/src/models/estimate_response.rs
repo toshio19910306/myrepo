@@ -39,6 +39,7 @@ pub struct CreateEstimateResponseRequest {
     pub response_remarks: Option<String>,
     pub response_date: Option<String>,
     pub created_by: i32,
+    pub attachment_ids: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, Validate)]

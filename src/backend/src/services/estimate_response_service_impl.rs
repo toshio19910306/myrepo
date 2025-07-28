@@ -1,6 +1,7 @@
 use anyhow::Result;
 use chrono::Utc;
 use sqlx::{PgPool, Row};
+use uuid::Uuid;
 
 use crate::models::{EstimateResponse, CreateEstimateResponseRequest, UpdateEstimateResponseRequest};
 
@@ -67,6 +68,20 @@ pub async fn create_response(pool: &PgPool, request: CreateEstimateResponseReque
     .bind(Utc::now())
     .fetch_one(pool)
     .await?;
+
+    if let Some(attachment_ids) = request.attachment_ids {
+        for file_id in attachment_ids {
+            if let Ok(uuid) = Uuid::parse_str(&file_id) {
+                let _ = sqlx::query(
+                    "UPDATE attached_files SET target_type = 'RESPONSE', target_id = $1 WHERE file_id = $2"
+                )
+                .bind(estimate_response.response_id)
+                .bind(uuid)
+                .execute(pool)
+                .await;
+            }
+        }
+    }
 
     Ok(estimate_response)
 }
