@@ -146,13 +146,12 @@ pub async fn submit_request(pool: &PgPool, request_id: i32) -> Result<Option<Est
 
 pub async fn get_approved_requests(pool: &PgPool) -> Result<Vec<EstimateRequest>> {
     let requests = sqlx::query_as::<_, EstimateRequest>(
-        "SELECT DISTINCT er.request_id, er.spec_id, er.subject, er.description, er.deadline, 
-                er.budget_range_min, er.budget_range_max, er.requirements, er.vendor_name, er.status, 
-                er.created_by, er.created_at, er.updated_at
-         FROM estimate_requests er
-         INNER JOIN approval_flows af ON af.target_type = 'REQUEST' AND af.target_id = er.request_id
-         WHERE af.status = 'APPROVED' AND er.status = 'RESPONDED'
-         ORDER BY er.created_at DESC"
+        "SELECT request_id, spec_id, subject, description, deadline, 
+                budget_range_min, budget_range_max, requirements, vendor_name, status, 
+                created_by, created_at, updated_at
+         FROM estimate_requests 
+         WHERE status IN ('RESPONDED', 'SUBMITTED')
+         ORDER BY created_at DESC"
     )
     .fetch_all(pool)
     .await?;

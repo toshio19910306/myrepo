@@ -79,10 +79,14 @@ export default function NewResponsePage() {
 
   const fetchApprovedRequests = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/requests/approved");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved`);
       if (response.ok) {
         const apiResponse = await response.json();
-        setApprovedRequests(apiResponse.data || []);
+        if (apiResponse.success && Array.isArray(apiResponse.data)) {
+          setApprovedRequests(apiResponse.data);
+        } else {
+          setApprovedRequests([]);
+        }
       } else {
         setError("承認済み見積依頼の取得に失敗しました");
       }
@@ -93,10 +97,14 @@ export default function NewResponsePage() {
 
   const fetchVendors = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/users");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users?user_type=VENDOR`);
       if (response.ok) {
         const apiResponse = await response.json();
-        setVendors(apiResponse.data || []);
+        if (apiResponse.success && Array.isArray(apiResponse.data)) {
+          setVendors(apiResponse.data);
+        } else {
+          setVendors([]);
+        }
       } else {
         setError("ベンダー情報の取得に失敗しました");
       }
@@ -123,7 +131,7 @@ export default function NewResponsePage() {
       formData.append("target_id", "0");
 
       try {
-        const response = await fetch("http://localhost:8000/api/files/upload", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
           method: "POST",
           body: formData,
         });
@@ -150,7 +158,7 @@ export default function NewResponsePage() {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:8000/api/responses", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

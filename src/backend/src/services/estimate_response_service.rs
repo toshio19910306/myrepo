@@ -33,16 +33,13 @@ pub async fn approve_response(
     response_id: i32,
     _payload: serde_json::Value,
 ) -> Result<serde_json::Value> {
-    let updated_response = sqlx::query_as!(
-        EstimateResponse,
-        r#"
-        UPDATE estimate_responses 
-        SET status = 'approved', updated_at = NOW()
-        WHERE response_id = $1
-        RETURNING *
-        "#,
-        response_id
+    let updated_response = sqlx::query_as::<_, EstimateResponse>(
+        "UPDATE estimate_responses 
+         SET status = 'APPROVED', updated_at = NOW()
+         WHERE response_id = $1
+         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
+    .bind(response_id)
     .fetch_one(db_pool)
     .await?;
 
@@ -54,16 +51,13 @@ pub async fn reject_response(
     response_id: i32,
     _payload: serde_json::Value,
 ) -> Result<serde_json::Value> {
-    let updated_response = sqlx::query_as!(
-        EstimateResponse,
-        r#"
-        UPDATE estimate_responses 
-        SET status = 'rejected', updated_at = NOW()
-        WHERE response_id = $1
-        RETURNING *
-        "#,
-        response_id
+    let updated_response = sqlx::query_as::<_, EstimateResponse>(
+        "UPDATE estimate_responses 
+         SET status = 'REJECTED', updated_at = NOW()
+         WHERE response_id = $1
+         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
+    .bind(response_id)
     .fetch_one(db_pool)
     .await?;
 
@@ -73,13 +67,11 @@ pub async fn reject_response(
 pub async fn get_pending_approvals(
     db_pool: &PgPool,
 ) -> Result<Vec<serde_json::Value>> {
-    let responses = sqlx::query_as!(
-        EstimateResponse,
-        r#"
-        SELECT * FROM estimate_responses 
-        WHERE status = 'submitted'
-        ORDER BY created_at DESC
-        "#
+    let responses = sqlx::query_as::<_, EstimateResponse>(
+        "SELECT response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
+         FROM estimate_responses 
+         WHERE status = 'SUBMITTED'
+         ORDER BY created_at DESC"
     )
     .fetch_all(db_pool)
     .await?;

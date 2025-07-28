@@ -31,6 +31,7 @@ const customJestConfig = {
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
+  coverageReporters: ['text', 'lcov', 'html'],
 }
 
 module.exports = createJestConfig(customJestConfig)
