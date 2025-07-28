@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Edit, Eye, FileText } from "lucide-react";
+import { Plus, Edit, Eye, FileText, CheckCircle, XCircle } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
 
 interface EstimateResponse {
   response_id: number;
@@ -30,6 +31,7 @@ export default function ResponsesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { currentUser } = useUser();
 
   useEffect(() => {
     fetchResponses();
@@ -56,6 +58,58 @@ export default function ResponsesPage() {
       setError(`見積回答の取得中にエラーが発生しました: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleApprove = async (responseId: number) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          approver_id: currentUser?.id || 1,
+          action: "approved",
+          comments: "承認しました"
+        })
+      });
+
+      if (response.ok) {
+        alert('見積回答を承認しました');
+        await fetchResponses();
+      } else {
+        alert('承認処理に失敗しました');
+      }
+    } catch (err) {
+      console.error('Error approving response:', err);
+      alert('承認処理に失敗しました');
+    }
+  };
+
+  const handleReject = async (responseId: number) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          approver_id: currentUser?.id || 1,
+          action: "rejected",
+          comments: "差し戻しました"
+        })
+      });
+
+      if (response.ok) {
+        alert('見積回答を差し戻しました');
+        await fetchResponses();
+      } else {
+        alert('差し戻し処理に失敗しました');
+      }
+    } catch (err) {
+      console.error('Error rejecting response:', err);
+      alert('差し戻し処理に失敗しました');
     }
   };
 
@@ -196,6 +250,27 @@ export default function ResponsesPage() {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
+                            {response.status === "submitted" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => handleApprove(response.response_id)}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  承認依頼
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => handleReject(response.response_id)}
+                                >
+                                  <XCircle className="h-4 w-4 mr-1" />
+                                  差し戻し
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
