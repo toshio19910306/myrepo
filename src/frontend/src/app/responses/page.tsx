@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -28,6 +29,7 @@ export default function ResponsesPage() {
   const [responses, setResponses] = useState<EstimateResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchResponses();
@@ -77,6 +79,10 @@ export default function ResponsesPage() {
     }).format(amount);
   };
 
+  const filteredResponses = responses.filter((response) =>
+    response.estimate_number?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString("ja-JP");
@@ -111,6 +117,15 @@ export default function ResponsesPage() {
           </Button>
         </div>
 
+        <div className="mb-6">
+          <Input
+            placeholder="見積番号で検索..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-md"
+          />
+        </div>
+
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
             <AlertDescription className="text-red-800">{error}</AlertDescription>
@@ -123,7 +138,7 @@ export default function ResponsesPage() {
             <CardDescription>作成された見積回答の一覧です</CardDescription>
           </CardHeader>
           <CardContent>
-            {responses.length === 0 ? (
+            {filteredResponses.length === 0 ? (
               <div className="text-center py-8">
                 <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">見積回答がありません</h3>
@@ -154,7 +169,7 @@ export default function ResponsesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {responses.map((response) => (
+                    {filteredResponses.map((response) => (
                       <TableRow key={response.response_id}>
                         <TableCell className="font-medium">
                           {response.estimate_number || "-"}
