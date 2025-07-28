@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Edit, FileText } from "lucide-react";
+import { ArrowLeft, Edit } from "lucide-react";
 
 interface EstimateResponse {
   response_id: number;
@@ -15,7 +15,7 @@ interface EstimateResponse {
   estimate_number?: string;
   estimate_price?: number;
   total_amount?: number;
-  breakdown?: any;
+  breakdown?: Record<string, unknown>;
   delivery_date?: string;
   validity_period?: string;
   terms_conditions?: string;
@@ -36,13 +36,7 @@ export default function ResponseDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      fetchResponseDetail();
-    }
-  }, [id]);
-
-  const fetchResponseDetail = async () => {
+  const fetchResponseDetail = useCallback(async () => {
     try {
       setError(null);
       const apiResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${id}`);
@@ -62,7 +56,13 @@ export default function ResponseDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchResponseDetail();
+    }
+  }, [id, fetchResponseDetail]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
