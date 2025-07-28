@@ -23,13 +23,7 @@ interface Vendor {
 }
 
 interface VendorFormData {
-  username: string;
-  email: string;
-  full_name: string;
   company_name: string;
-  department: string;
-  position: string;
-  password: string;
 }
 
 export default function VendorsPage() {
@@ -39,13 +33,7 @@ export default function VendorsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [formData, setFormData] = useState<VendorFormData>({
-    username: "",
-    email: "",
-    full_name: "",
     company_name: "",
-    department: "",
-    position: "",
-    password: "",
   });
 
   useEffect(() => {
@@ -92,9 +80,12 @@ export default function VendorsPage() {
       
       const method = editingVendor ? "PUT" : "POST";
       const payload = {
-        ...formData,
+        company_name: formData.company_name,
         user_type: "VENDOR",
-        ...(editingVendor ? {} : { password: formData.password })
+        username: formData.company_name.toLowerCase().replace(/\s+/g, '_'),
+        email: `${formData.company_name.toLowerCase().replace(/\s+/g, '_')}@vendor.local`,
+        full_name: formData.company_name,
+        ...(editingVendor ? {} : { password: "defaultpassword123" })
       };
 
       const response = await fetch(url, {
@@ -123,13 +114,7 @@ export default function VendorsPage() {
   const handleEdit = (vendor: Vendor) => {
     setEditingVendor(vendor);
     setFormData({
-      username: vendor.username,
-      email: vendor.email,
-      full_name: vendor.full_name,
       company_name: vendor.company_name || "",
-      department: vendor.department || "",
-      position: vendor.position || "",
-      password: "",
     });
     setIsDialogOpen(true);
   };
@@ -157,13 +142,7 @@ export default function VendorsPage() {
 
   const resetForm = () => {
     setFormData({
-      username: "",
-      email: "",
-      full_name: "",
       company_name: "",
-      department: "",
-      position: "",
-      password: "",
     });
   };
 
@@ -205,62 +184,6 @@ export default function VendorsPage() {
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="full_name">担当者名 <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="full_name"
-                    value={formData.full_name}
-                    onChange={(e) => handleInputChange("full_name", e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="department">担当者部署</Label>
-                  <Input
-                    id="department"
-                    value={formData.department}
-                    onChange={(e) => handleInputChange("department", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="position">担当者役職</Label>
-                  <Input
-                    id="position"
-                    value={formData.position}
-                    onChange={(e) => handleInputChange("position", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">メールアドレス <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="username">ユーザー名 <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="username"
-                    value={formData.username}
-                    onChange={(e) => handleInputChange("username", e.target.value)}
-                    required
-                  />
-                </div>
-                {!editingVendor && (
-                  <div>
-                    <Label htmlFor="password">パスワード <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
                 <div className="flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     キャンセル

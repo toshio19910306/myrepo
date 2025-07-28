@@ -93,6 +93,16 @@ export default function EditResponsePage() {
               response_remarks: responseData.response_remarks || "",
               response_date: responseData.response_date || "",
             });
+            
+            try {
+              const filesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/target/RESPONSE/${responseId}`);
+              if (filesResponse.ok) {
+                const filesData = await filesResponse.json();
+                setAttachedFiles(filesData.data || []);
+              }
+            } catch (err) {
+              console.error('Error fetching existing attachments:', err);
+            }
           } else {
             setError("見積回答の取得に失敗しました");
           }

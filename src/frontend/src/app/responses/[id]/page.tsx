@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Edit } from "lucide-react";
+import { ArrowLeft, Edit, Download, FileText } from "lucide-react";
 
 interface EstimateResponse {
   response_id: number;
@@ -27,12 +27,21 @@ interface EstimateResponse {
   updated_at: string;
 }
 
+interface AttachedFile {
+  file_id: string;
+  filename: string;
+  size: number;
+  content_type: string;
+  url: string;
+}
+
 export default function ResponseDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   
   const [response, setResponse] = useState<EstimateResponse | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +53,16 @@ export default function ResponseDetailPage() {
         const result = await apiResponse.json();
         if (result.success && result.data) {
           setResponse(result.data);
+          
+          try {
+            const filesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/target/RESPONSE/${id}`);
+            if (filesResponse.ok) {
+              const filesData = await filesResponse.json();
+              setAttachedFiles(filesData.data || []);
+            }
+          } catch (err) {
+            console.error('Error fetching attachments:', err);
+          }
         } else {
           setError("見積回答の取得に失敗しました");
         }
@@ -63,6 +82,25 @@ export default function ResponseDetailPage() {
       fetchResponseDetail();
     }
   }, [id, fetchResponseDetail]);
+
+  const handleDownloadFile = async (file: AttachedFile) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/download/${file.file_id}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (err) {
+      console.error('Error downloading file:', err);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -210,6 +248,37 @@ export default function ResponseDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {attachedFiles.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl text-gray-900">添付ファイル</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {attachedFiles.map((file) => (
+                    <div key={file.file_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{file.filename}</p>
+                          <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownloadFile(file)}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
