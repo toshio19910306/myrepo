@@ -1,32 +1,25 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { jest } from '@jest/globals';
 import ResponsesPage from '../src/app/responses/page';
 
-global.fetch = jest.fn();
-
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    refresh: jest.fn(),
-  }),
-}));
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
 describe('ResponsesPage', () => {
   beforeEach(() => {
-    (fetch as jest.MockedFunction<typeof fetch>).mockClear();
+    mockFetch.mockClear();
   });
 
   test('renders responses page with empty state', async () => {
-    (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true, data: [] }),
-    } as Response);
+    });
 
     render(<ResponsesPage />);
     
     await waitFor(() => {
       expect(screen.getByText('見積回答')).toBeInTheDocument();
-      expect(screen.getByText('見積回答に対する回答を管理します')).toBeInTheDocument();
+      expect(screen.getByText('見積依頼に対する回答を管理します')).toBeInTheDocument();
       expect(screen.getByText('見積回答がありません')).toBeInTheDocument();
     });
   });
@@ -45,10 +38,10 @@ describe('ResponsesPage', () => {
       },
     ];
 
-    (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true, data: mockResponses }),
-    } as Response);
+    });
 
     render(<ResponsesPage />);
     
@@ -60,7 +53,7 @@ describe('ResponsesPage', () => {
   });
 
   test('handles API error gracefully', async () => {
-    (fetch as jest.MockedFunction<typeof fetch>).mockRejectedValueOnce(
+    mockFetch.mockRejectedValueOnce(
       new Error('API Error')
     );
 
@@ -89,10 +82,10 @@ describe('ResponsesPage', () => {
       },
     ];
 
-    (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true, data: mockResponses }),
-    } as Response);
+    });
 
     render(<ResponsesPage />);
     

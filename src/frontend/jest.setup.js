@@ -1,5 +1,27 @@
 import '@testing-library/jest-dom'
 
+jest.mock('next/navigation', () => ({
+  useRouter() {
+    return {
+      push: jest.fn(),
+      replace: jest.fn(),
+      refresh: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn(),
+      prefetch: jest.fn(),
+    }
+  },
+  useSearchParams() {
+    return new URLSearchParams()
+  },
+  usePathname() {
+    return ''
+  },
+  useParams() {
+    return { id: '1' }
+  },
+}))
+
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}

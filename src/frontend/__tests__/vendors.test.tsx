@@ -1,19 +1,19 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { jest } from '@jest/globals';
 import VendorsPage from '../src/app/vendors/page';
 
-global.fetch = jest.fn();
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
 describe('VendorsPage', () => {
   beforeEach(() => {
-    (fetch as jest.MockedFunction<typeof fetch>).mockClear();
+    mockFetch.mockClear();
   });
 
   test('renders vendors page with empty state', async () => {
-    (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true, data: [] }),
-    } as Response);
+    });
 
     render(<VendorsPage />);
     
@@ -40,10 +40,10 @@ describe('VendorsPage', () => {
       },
     ];
 
-    (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true, data: mockVendors }),
-    } as Response);
+    });
 
     render(<VendorsPage />);
     
@@ -56,10 +56,10 @@ describe('VendorsPage', () => {
   });
 
   test('opens create vendor dialog when button is clicked', async () => {
-    (fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true, data: [] }),
-    } as Response);
+    });
 
     render(<VendorsPage />);
     
@@ -75,19 +75,19 @@ describe('VendorsPage', () => {
   });
 
   test('handles vendor creation form submission', async () => {
-    (fetch as jest.MockedFunction<typeof fetch>)
+    mockFetch
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: true, data: [] }),
-      } as Response)
+      })
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: true }),
-      } as Response)
+      })
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: true, data: [] }),
-      } as Response);
+      });
 
     render(<VendorsPage />);
     
