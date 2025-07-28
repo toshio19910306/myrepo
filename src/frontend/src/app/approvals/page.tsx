@@ -202,7 +202,7 @@ export default function ApprovalsPage() {
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-primary mb-2">
-            承認管理
+            見積依頼承認管理
           </h1>
           <p className="text-muted-foreground">
             {currentUser ? `${currentUser.name}さんの承認待ち案件` : "多段階承認プロセスの管理・追跡・実行"}
