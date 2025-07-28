@@ -7,6 +7,8 @@ import { UserProvider } from "@/contexts/UserContext";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  fallback: ["system-ui", "arial", "sans-serif"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
