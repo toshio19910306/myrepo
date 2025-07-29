@@ -1,0 +1,64 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: estimate-db
+    environment:
+      POSTGRES_DB: estimate_request_db
+      POSTGRES_USER: estimate_user
+      POSTGRES_PASSWORD: estimate_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - estimate-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U estimate_user -d estimate_request_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: estimate-backend
+    environment:
+      DATABASE_URL: postgresql://estimate_user:estimate_password@database:5432/estimate_request_db
+      JWT_SECRET: development-jwt-secret-for-docker
+      ENVIRONMENT: development
+      PORT: 8000
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - estimate-network
+    restart: unless-stopped
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+    container_name: estimate-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - estimate-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  estimate-network:
+    driver: bridge
