@@ -64,6 +64,7 @@ interface User {
   username: string;
   email: string;
   full_name: string;
+  company_name?: string;
   department?: string;
   position?: string;
   is_active: boolean;
