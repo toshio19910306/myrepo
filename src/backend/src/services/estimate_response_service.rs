@@ -37,7 +37,7 @@ pub async fn approve_response(
         "UPDATE estimate_responses 
          SET status = 'APPROVED', updated_at = NOW()
          WHERE response_id = $1
-         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
+         RETURNING response_id, request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(response_id)
     .fetch_one(db_pool)
@@ -55,7 +55,7 @@ pub async fn reject_response(
         "UPDATE estimate_responses 
          SET status = 'REJECTED', updated_at = NOW()
          WHERE response_id = $1
-         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
+         RETURNING response_id, request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(response_id)
     .fetch_one(db_pool)
@@ -68,7 +68,7 @@ pub async fn get_pending_approvals(
     db_pool: &PgPool,
 ) -> Result<Vec<serde_json::Value>> {
     let responses = sqlx::query_as::<_, EstimateResponse>(
-        "SELECT response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
+        "SELECT response_id, request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
          FROM estimate_responses 
          WHERE status = 'SUBMITTED'
          ORDER BY created_at DESC"

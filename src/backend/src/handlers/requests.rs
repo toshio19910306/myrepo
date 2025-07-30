@@ -43,7 +43,7 @@ async fn get_requests(
                     "budget_range_min": r.budget_range_min,
                     "budget_range_max": r.budget_range_max,
                     "requirements": r.requirements,
-                    "vendor_id": r.vendor_id,
+                    "company_id": r.company_id,
                     "status": r.status,
                     "created_by": r.created_by,
                     "created_at": r.created_at,
@@ -88,7 +88,7 @@ async fn get_request(
                 "budget_range_min": request.budget_range_min,
                 "budget_range_max": request.budget_range_max,
                 "requirements": request.requirements,
-                "vendor_id": request.vendor_id,
+                "company_id": request.company_id,
                 "status": request.status,
                 "created_by": request.created_by,
                 "created_at": request.created_at,
@@ -153,7 +153,7 @@ async fn create_request(
                 "budget_range_min": request.budget_range_min,
                 "budget_range_max": request.budget_range_max,
                 "requirements": request.requirements,
-                "vendor_id": request.vendor_id,
+                "company_id": request.company_id,
                 "status": request.status,
                 "created_by": request.created_by,
                 "created_at": request.created_at,
@@ -208,7 +208,7 @@ async fn update_request(
                 "budget_range_min": request.budget_range_min,
                 "budget_range_max": request.budget_range_max,
                 "requirements": request.requirements,
-                "vendor_id": request.vendor_id,
+                "company_id": request.company_id,
                 "status": request.status,
                 "created_by": request.created_by,
                 "created_at": request.created_at,
@@ -330,7 +330,7 @@ async fn get_approved_requests(
                     "budget_range_min": r.budget_range_min,
                     "budget_range_max": r.budget_range_max,
                     "requirements": r.requirements,
-                    "vendor_id": r.vendor_id,
+                    "company_id": r.company_id,
                     "status": r.status,
                     "created_by": r.created_by,
                     "created_at": r.created_at,
@@ -375,7 +375,7 @@ async fn copy_request(
                 "budget_range_min": request.budget_range_min,
                 "budget_range_max": request.budget_range_max,
                 "requirements": request.requirements,
-                "vendor_id": request.vendor_id,
+                "company_id": request.company_id,
                 "status": request.status,
                 "created_by": request.created_by,
                 "created_at": request.created_at,
@@ -478,7 +478,7 @@ async fn submit_request_for_approval(
         "UPDATE estimate_requests 
          SET status = $1, updated_at = $2
          WHERE request_id = $3 AND status IN ('DRAFT', 'CLOSED')
-         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at"
+         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at"
     )
     .bind("PENDING_APPROVAL")
     .bind(chrono::Utc::now())

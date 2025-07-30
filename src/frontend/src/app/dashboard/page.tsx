@@ -64,7 +64,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">
-                ベンダー数
+                会社数
               </CardTitle>
             </CardHeader>
             <CardContent>

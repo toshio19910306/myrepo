@@ -11,7 +11,7 @@ import { ArrowLeft, Edit, Download, FileText } from "lucide-react";
 interface EstimateResponse {
   response_id: number;
   request_id: number;
-  vendor_id?: number;
+  company_id?: number;
   estimate_number?: string;
   estimate_price?: number;
   total_amount?: number;

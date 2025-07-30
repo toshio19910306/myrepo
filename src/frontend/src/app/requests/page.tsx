@@ -31,7 +31,7 @@ interface EditingRequest {
   budget_range_min: number | null;
   budget_range_max: number | null;
   requirements: string | null;
-  vendorId: string;
+  company_id: string;
   status: string;
   created_by: number;
   created_at: string;
@@ -88,11 +88,11 @@ export default function RequestsPage() {
     description: "",
     dueDate: "",
     specId: "",
-    vendorId: ""
+    company_id: ""
   });
   const [specifications, setSpecifications] = useState<Specification[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [vendors, setVendors] = useState<User[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [selectedApprovers, setSelectedApprovers] = useState<number[]>([]);
   const [approvalRequestId, setApprovalRequestId] = useState<number | null>(null);
@@ -103,7 +103,7 @@ export default function RequestsPage() {
     fetchRequests();
     fetchSpecifications();
     fetchUsers();
-    fetchVendors();
+    fetchCompanies();
   }, []);
 
   const fetchRequests = async () => {
@@ -216,22 +216,34 @@ export default function RequestsPage() {
       let formattedDate = newRequest.dueDate;
       console.log('Original date from form:', formattedDate);
       
-      if (formattedDate && !formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        console.log('Date not in YYYY-MM-DD format, attempting to fix...');
-        const dateObj = new Date(formattedDate);
-        if (!isNaN(dateObj.getTime())) {
-          const year = dateObj.getFullYear();
-          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-          const day = String(dateObj.getDate()).padStart(2, '0');
-          formattedDate = `${year}-${month}-${day}`;
-          console.log('Successfully reformatted date:', formattedDate);
-        } else {
-          console.error('Invalid date format, cannot parse:', formattedDate);
-          alert('無効な日付形式です。正しい日付を入力してください。');
-          return;
+      if (formattedDate) {
+        if (formattedDate.match(/^\d{5}-\d{2}-\d{2}$/)) {
+          console.log('Detected malformed date, attempting to fix...');
+          const parts = formattedDate.split('-');
+          if (parts.length === 3 && parts[0].length === 5) {
+            const year = parts[0].slice(-4); // Take last 4 digits
+            formattedDate = `${year}-${parts[1]}-${parts[2]}`;
+            console.log('Fixed malformed date to:', formattedDate);
+          }
         }
-      } else {
-        console.log('Date already in correct YYYY-MM-DD format');
+        
+        if (!formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          console.log('Date not in YYYY-MM-DD format, attempting to fix...');
+          const dateObj = new Date(formattedDate);
+          if (!isNaN(dateObj.getTime())) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            formattedDate = `${year}-${month}-${day}`;
+            console.log('Successfully reformatted date:', formattedDate);
+          } else {
+            console.error('Invalid date format, cannot parse:', formattedDate);
+            alert('無効な日付形式です。正しい日付を入力してください。');
+            return;
+          }
+        } else {
+          console.log('Date already in correct YYYY-MM-DD format');
+        }
       }
 
       const requestData = {
@@ -241,7 +253,7 @@ export default function RequestsPage() {
         attachment_ids: attachmentIds,
         created_by: 1,
         spec_id: newRequest.specId ? parseInt(newRequest.specId) : null,
-        vendor_id: newRequest.vendorId ? parseInt(newRequest.vendorId) : null
+        company_id: newRequest.company_id ? parseInt(newRequest.company_id) : null
       };
       
       console.log('Final request data being sent:', requestData);
@@ -265,7 +277,7 @@ export default function RequestsPage() {
         description: '',
         dueDate: '',
         specId: '',
-        vendorId: ''
+        company_id: ''
       });
       setSelectedFiles([]);
       setShowCreateModal(false);
@@ -302,7 +314,7 @@ export default function RequestsPage() {
       description: "",
       dueDate: "",
       specId: "",
-      vendorId: ""
+      company_id: ""
     });
     setSelectedFiles([]);
   };
@@ -318,7 +330,7 @@ export default function RequestsPage() {
           ...data.data,
           title: data.data.subject,
           dueDate: data.data.deadline ? data.data.deadline.split('T')[0] : '',
-          vendorId: data.data.vendor_id ? data.data.vendor_id.toString() : ''
+          company_id: data.data.company_id ? data.data.company_id.toString() : ''
         });
         
         console.log('Fetching files for request ID:', request.request_id);
@@ -396,7 +408,7 @@ export default function RequestsPage() {
         description: editingRequest.description,
         deadline: editingRequest.dueDate,
         spec_id: editingRequest.spec_id || null,
-        vendor_id: editingRequest.vendorId ? parseInt(editingRequest.vendorId) : null
+        company_id: editingRequest.company_id ? parseInt(editingRequest.company_id) : null
       };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${editingRequest.request_id}`, {
@@ -533,13 +545,13 @@ export default function RequestsPage() {
     }
   };
 
-  const fetchVendors = async () => {
+  const fetchCompanies = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users?user_type=VENDOR`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
-          setVendors(apiResponse.data);
+          setCompanies(apiResponse.data);
         }
       }
     } catch (error) {
@@ -605,7 +617,7 @@ export default function RequestsPage() {
             見積依頼管理
           </h1>
           <p className="text-muted-foreground">
-            ベンダーへの見積依頼作成・管理・追跡
+            会社への見積依頼作成・管理・追跡
           </p>
         </header>
 
@@ -772,16 +784,16 @@ export default function RequestsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">ベンダー</label>
+                  <label className="block text-sm font-medium mb-2">会社</label>
                   <select
-                    value={newRequest.vendorId}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, vendorId: e.target.value }))}
+                    value={newRequest.company_id}
+                    onChange={(e) => setNewRequest(prev => ({ ...prev, company_id: e.target.value }))}
                     className="w-full p-2 border border-gray-300 rounded-md"
                   >
-                    <option value="">ベンダーを選択してください</option>
-                    {vendors.map((vendor) => (
-                      <option key={vendor.user_id} value={vendor.user_id.toString()}>
-                        {vendor.company_name || vendor.full_name}
+                    <option value="">会社を選択してください</option>
+                    {companies.map((company) => (
+                      <option key={company.company_id} value={company.company_id.toString()}>
+                        {company.company_name}
                       </option>
                     ))}
                   </select>
@@ -913,16 +925,16 @@ export default function RequestsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">ベンダー</label>
+                  <label className="block text-sm font-medium mb-2">会社</label>
                   <select
-                    value={editingRequest.vendorId || ''}
-                    onChange={(e) => setEditingRequest((prev) => prev ? ({ ...prev, vendorId: e.target.value }) : null)}
+                    value={editingRequest.company_id || ''}
+                    onChange={(e) => setEditingRequest((prev) => prev ? ({ ...prev, company_id: e.target.value }) : null)}
                     className="w-full p-2 border border-gray-300 rounded-md"
                   >
-                    <option value="">ベンダーを選択してください</option>
-                    {vendors.map((vendor) => (
-                      <option key={vendor.user_id} value={vendor.user_id.toString()}>
-                        {vendor.company_name || vendor.full_name}
+                    <option value="">会社を選択してください</option>
+                    {companies.map((company) => (
+                      <option key={company.company_id} value={company.company_id.toString()}>
+                        {company.company_name}
                       </option>
                     ))}
                   </select>

@@ -128,9 +128,9 @@ export default function EditResponsePage() {
       }
     };
 
-    const fetchVendors = async () => {
+    const fetchCompanies = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users?user_type=VENDOR`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies`);
         if (response.ok) {
           const data = await response.json();
           if (data.success && Array.isArray(data.data)) {
@@ -138,13 +138,13 @@ export default function EditResponsePage() {
           }
         }
       } catch {
-        console.error("ベンダー情報の取得に失敗しました");
+        console.error("会社情報の取得に失敗しました");
       }
     };
 
     fetchResponse();
     fetchApprovedRequests();
-    fetchVendors();
+    fetchCompanies();
   }, [responseId]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -272,11 +272,11 @@ export default function EditResponsePage() {
 
               <div>
                 <Label htmlFor="vendor_id" className="text-sm font-medium text-gray-700">
-                  ベンダー
+                  会社
                 </Label>
                 <Select value={formData.vendor_id} onValueChange={(value) => handleInputChange("vendor_id", value)}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="ベンダーを選択してください" />
+                    <SelectValue placeholder="会社を選択してください" />
                   </SelectTrigger>
                   <SelectContent>
                     {vendors.map((vendor) => (

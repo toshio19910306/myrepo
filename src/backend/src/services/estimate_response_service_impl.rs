@@ -9,7 +9,7 @@ pub async fn get_all_responses(pool: &PgPool, page: i32, per_page: i32) -> Resul
     let offset = (page - 1) * per_page;
     
     let responses = sqlx::query_as::<_, EstimateResponse>(
-        "SELECT response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
+        "SELECT response_id, request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
          FROM estimate_responses 
          ORDER BY created_at DESC 
          LIMIT $1 OFFSET $2"
@@ -24,7 +24,7 @@ pub async fn get_all_responses(pool: &PgPool, page: i32, per_page: i32) -> Resul
 
 pub async fn get_response_by_id(pool: &PgPool, response_id: i32) -> Result<Option<EstimateResponse>> {
     let response = sqlx::query_as::<_, EstimateResponse>(
-        "SELECT response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
+        "SELECT response_id, request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at 
          FROM estimate_responses 
          WHERE response_id = $1"
     )
@@ -49,12 +49,12 @@ pub async fn create_response(pool: &PgPool, request: CreateEstimateResponseReque
         .map_err(|e| anyhow::anyhow!("Invalid date format for response_date: {}", e))?;
 
     let estimate_response = sqlx::query_as::<_, EstimateResponse>(
-        "INSERT INTO estimate_responses (request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at)
+        "INSERT INTO estimate_responses (request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'DRAFT', $12, $13, $13)
-         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
+         RETURNING response_id, request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(request.request_id)
-    .bind(request.vendor_id)
+    .bind(request.company_id)
     .bind(&request.estimate_number)
     .bind(&request.estimate_price)
     .bind(&request.total_amount)
@@ -101,13 +101,13 @@ pub async fn update_response(pool: &PgPool, response_id: i32, request: UpdateEst
 
     let estimate_response = sqlx::query_as::<_, EstimateResponse>(
         "UPDATE estimate_responses 
-         SET request_id = COALESCE($2, request_id), vendor_id = COALESCE($3, vendor_id), estimate_number = COALESCE($4, estimate_number), estimate_price = COALESCE($5, estimate_price), total_amount = COALESCE($6, total_amount), breakdown = COALESCE($7, breakdown), delivery_date = COALESCE($8, delivery_date), validity_period = COALESCE($9, validity_period), terms_conditions = COALESCE($10, terms_conditions), response_remarks = COALESCE($11, response_remarks), response_date = COALESCE($12, response_date), status = COALESCE($13, status), updated_at = $14
+         SET request_id = COALESCE($2, request_id), company_id = COALESCE($3, company_id), estimate_number = COALESCE($4, estimate_number), estimate_price = COALESCE($5, estimate_price), total_amount = COALESCE($6, total_amount), breakdown = COALESCE($7, breakdown), delivery_date = COALESCE($8, delivery_date), validity_period = COALESCE($9, validity_period), terms_conditions = COALESCE($10, terms_conditions), response_remarks = COALESCE($11, response_remarks), response_date = COALESCE($12, response_date), status = COALESCE($13, status), updated_at = $14
          WHERE response_id = $1
-         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
+         RETURNING response_id, request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(response_id)
     .bind(&request.request_id)
-    .bind(&request.vendor_id)
+    .bind(&request.company_id)
     .bind(&request.estimate_number)
     .bind(&request.estimate_price)
     .bind(&request.total_amount)
@@ -141,7 +141,7 @@ pub async fn submit_response(pool: &PgPool, response_id: i32) -> Result<Option<E
         "UPDATE estimate_responses 
          SET status = 'SUBMITTED', updated_at = $2
          WHERE response_id = $1
-         RETURNING response_id, request_id, vendor_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
+         RETURNING response_id, request_id, company_id, estimate_number, estimate_price, total_amount, breakdown, delivery_date, validity_period, terms_conditions, response_remarks, response_date, status, created_by, created_at, updated_at"
     )
     .bind(response_id)
     .bind(Utc::now())

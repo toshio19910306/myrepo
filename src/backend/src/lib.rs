@@ -7,6 +7,7 @@ pub mod handlers {
     pub mod approvals;
     pub mod approval_history;
     pub mod files;
+    pub mod companies;
 }
 pub mod middleware;
 pub mod models;
@@ -22,6 +23,8 @@ pub mod services {
     pub mod file_service;
     pub mod user_service;
     pub mod user_service_impl;
+    pub mod company_service;
+    pub mod company_service_impl;
 }
 pub mod utils;
 pub mod database;

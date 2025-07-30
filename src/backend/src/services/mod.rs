@@ -11,3 +11,5 @@ pub mod approval_service;
 pub mod approval_service_impl;
 pub mod file_service;
 pub mod email_service;
+pub mod company_service;
+pub mod company_service_impl;

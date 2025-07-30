@@ -66,6 +66,7 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/approvals", handlers::approvals::routes())
         .nest("/api/approval-history", handlers::approval_history::routes())
         .nest("/api/files", handlers::files::routes())
+        .nest("/api/companies", handlers::companies::routes())
         .layer(cors)
         .with_state(app_state);
 

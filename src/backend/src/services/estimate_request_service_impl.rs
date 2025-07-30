@@ -9,7 +9,7 @@ pub async fn get_all_requests(pool: &PgPool, page: i32, per_page: i32) -> Result
     let offset = (page - 1) * per_page;
     
     let requests = sqlx::query_as::<_, EstimateRequest>(
-        "SELECT request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at 
+        "SELECT request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at 
          FROM estimate_requests 
          ORDER BY created_at DESC 
          LIMIT $1 OFFSET $2"
@@ -24,7 +24,7 @@ pub async fn get_all_requests(pool: &PgPool, page: i32, per_page: i32) -> Result
 
 pub async fn get_request_by_id(pool: &PgPool, request_id: i32) -> Result<Option<EstimateRequest>> {
     let request = sqlx::query_as::<_, EstimateRequest>(
-        "SELECT request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at 
+        "SELECT request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at 
          FROM estimate_requests 
          WHERE request_id = $1"
     )
@@ -47,9 +47,9 @@ pub async fn create_request(pool: &PgPool, request: CreateEstimateRequestRequest
     let created_by = request.created_by;
     
     let estimate_request = sqlx::query_as::<_, EstimateRequest>(
-        "INSERT INTO estimate_requests (spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at)
+        "INSERT INTO estimate_requests (spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'DRAFT', $9, $10, $10)
-         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at"
+         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at"
     )
     .bind(request.spec_id)
     .bind(&request.subject)
@@ -58,7 +58,7 @@ pub async fn create_request(pool: &PgPool, request: CreateEstimateRequestRequest
     .bind(&request.budget_range_min)
     .bind(&request.budget_range_max)
     .bind(&request.requirements)
-    .bind(&request.vendor_id)
+    .bind(&request.company_id)
     .bind(created_by)
     .bind(Utc::now())
     .fetch_one(pool)
@@ -96,9 +96,9 @@ pub async fn update_request(pool: &PgPool, request_id: i32, request: UpdateEstim
 
     let estimate_request = sqlx::query_as::<_, EstimateRequest>(
         "UPDATE estimate_requests 
-         SET spec_id = COALESCE($2, spec_id), subject = COALESCE($3, subject), description = COALESCE($4, description), deadline = COALESCE($5, deadline), budget_range_min = COALESCE($6, budget_range_min), budget_range_max = COALESCE($7, budget_range_max), requirements = COALESCE($8, requirements), vendor_id = COALESCE($9, vendor_id), status = COALESCE($10, status), updated_at = $11
+         SET spec_id = COALESCE($2, spec_id), subject = COALESCE($3, subject), description = COALESCE($4, description), deadline = COALESCE($5, deadline), budget_range_min = COALESCE($6, budget_range_min), budget_range_max = COALESCE($7, budget_range_max), requirements = COALESCE($8, requirements), company_id = COALESCE($9, company_id), status = COALESCE($10, status), updated_at = $11
          WHERE request_id = $1
-         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at"
+         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at"
     )
     .bind(request_id)
     .bind(&request.spec_id)
@@ -108,7 +108,7 @@ pub async fn update_request(pool: &PgPool, request_id: i32, request: UpdateEstim
     .bind(&request.budget_range_min)
     .bind(&request.budget_range_max)
     .bind(&request.requirements)
-    .bind(&request.vendor_id)
+    .bind(&request.company_id)
     .bind(&request.status)
     .bind(Utc::now())
     .fetch_optional(pool)
@@ -134,7 +134,7 @@ pub async fn submit_request(pool: &PgPool, request_id: i32) -> Result<Option<Est
         "UPDATE estimate_requests 
          SET status = 'SUBMITTED', updated_at = $2
          WHERE request_id = $1
-         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at"
+         RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at"
     )
     .bind(request_id)
     .bind(Utc::now())
@@ -147,7 +147,7 @@ pub async fn submit_request(pool: &PgPool, request_id: i32) -> Result<Option<Est
 pub async fn get_approved_requests(pool: &PgPool) -> Result<Vec<EstimateRequest>> {
     let requests = sqlx::query_as::<_, EstimateRequest>(
         "SELECT request_id, spec_id, subject, description, deadline, 
-                budget_range_min, budget_range_max, requirements, vendor_id, status, 
+                budget_range_min, budget_range_max, requirements, company_id, status, 
                 created_by, created_at, updated_at
          FROM estimate_requests 
          WHERE status IN ('RESPONDED', 'SUBMITTED')
@@ -164,9 +164,9 @@ pub async fn copy_request(pool: &PgPool, request_id: i32, created_by: i32) -> Re
     
     if let Some(original) = original_request {
         let new_request = sqlx::query_as::<_, EstimateRequest>(
-            "INSERT INTO estimate_requests (spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at)
+            "INSERT INTO estimate_requests (spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'DRAFT', $9, $10, $10)
-             RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, vendor_id, status, created_by, created_at, updated_at"
+             RETURNING request_id, spec_id, subject, description, deadline, budget_range_min, budget_range_max, requirements, company_id, status, created_by, created_at, updated_at"
         )
         .bind(original.spec_id)
         .bind(&format!("{} (コピー)", original.subject))
@@ -175,7 +175,7 @@ pub async fn copy_request(pool: &PgPool, request_id: i32, created_by: i32) -> Re
         .bind(&original.budget_range_min)
         .bind(&original.budget_range_max)
         .bind(&original.requirements)
-        .bind(&original.vendor_id)
+        .bind(&original.company_id)
         .bind(created_by)
         .bind(Utc::now())
         .fetch_one(pool)

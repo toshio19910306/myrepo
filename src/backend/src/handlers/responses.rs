@@ -44,7 +44,7 @@ async fn get_responses(
                 .map(|r| serde_json::json!({
                     "response_id": r.response_id,
                     "request_id": r.request_id,
-                    "vendor_id": r.vendor_id,
+                    "company_id": r.company_id,
                     "estimate_number": r.estimate_number,
                     "estimate_price": r.estimate_price,
                     "total_amount": r.total_amount,
@@ -92,7 +92,7 @@ async fn get_response(
             data: Some(serde_json::json!({
                 "response_id": response.response_id,
                 "request_id": response.request_id,
-                "vendor_id": response.vendor_id,
+                "company_id": response.company_id,
                 "estimate_number": response.estimate_number,
                 "estimate_price": response.estimate_price,
                 "total_amount": response.total_amount,
@@ -160,7 +160,7 @@ async fn create_response(
             data: Some(serde_json::json!({
                 "response_id": response.response_id,
                 "request_id": response.request_id,
-                "vendor_id": response.vendor_id,
+                "company_id": response.company_id,
                 "estimate_number": response.estimate_number,
                 "estimate_price": response.estimate_price,
                 "total_amount": response.total_amount,
@@ -218,7 +218,7 @@ async fn update_response(
             data: Some(serde_json::json!({
                 "response_id": response.response_id,
                 "request_id": response.request_id,
-                "vendor_id": response.vendor_id,
+                "company_id": response.company_id,
                 "estimate_number": response.estimate_number,
                 "estimate_price": response.estimate_price,
                 "total_amount": response.total_amount,

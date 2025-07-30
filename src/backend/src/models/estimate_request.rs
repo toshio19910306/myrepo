@@ -14,7 +14,7 @@ pub struct EstimateRequest {
     pub budget_range_min: Option<Decimal>,
     pub budget_range_max: Option<Decimal>,
     pub requirements: Option<String>,
-    pub vendor_id: Option<i32>,
+    pub company_id: Option<i32>,
     pub status: String,
     pub created_by: Option<i32>,
     pub created_at: DateTime<Utc>,
@@ -33,7 +33,7 @@ pub struct CreateEstimateRequestRequest {
     pub budget_range_min: Option<Decimal>,
     pub budget_range_max: Option<Decimal>,
     pub requirements: Option<String>,
-    pub vendor_id: Option<i32>,
+    pub company_id: Option<i32>,
     pub created_by: i32,
     pub attachment_ids: Option<Vec<String>>,
 }
@@ -48,7 +48,7 @@ pub struct UpdateEstimateRequestRequest {
     pub budget_range_min: Option<Decimal>,
     pub budget_range_max: Option<Decimal>,
     pub requirements: Option<String>,
-    pub vendor_id: Option<i32>,
+    pub company_id: Option<i32>,
     pub status: Option<String>,
 }
 

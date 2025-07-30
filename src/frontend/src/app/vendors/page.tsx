@@ -11,15 +11,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Edit, Trash2, Building } from "lucide-react";
 
 interface Vendor {
-  user_id: number;
-  username: string;
-  email: string;
-  full_name: string;
-  company_name?: string;
-  department?: string;
-  position?: string;
+  company_id: number;
+  company_name: string;
   is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 interface VendorFormData {
@@ -43,7 +39,7 @@ export default function VendorsPage() {
   const fetchVendors = async () => {
     try {
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users?user_type=VENDOR`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -52,11 +48,11 @@ export default function VendorsPage() {
           setVendors([]);
         }
       } else {
-        setError("ベンダー一覧の取得に失敗しました");
+        setError("会社一覧の取得に失敗しました");
       }
     } catch (err) {
       console.error('Error fetching vendors:', err);
-      setError("ベンダー一覧の取得中にエラーが発生しました");
+      setError("会社一覧の取得中にエラーが発生しました");
     } finally {
       setIsLoading(false);
     }
@@ -75,17 +71,12 @@ export default function VendorsPage() {
 
     try {
       const url = editingVendor 
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/${editingVendor.user_id}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies/${editingVendor.company_id}`
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies`;
       
       const method = editingVendor ? "PUT" : "POST";
       const payload = {
-        company_name: formData.company_name,
-        user_type: "VENDOR",
-        username: formData.company_name.toLowerCase().replace(/\s+/g, '_'),
-        email: `${formData.company_name.toLowerCase().replace(/\s+/g, '_')}@vendor.local`,
-        full_name: formData.company_name,
-        ...(editingVendor ? {} : { password: "defaultpassword123" })
+        company_name: formData.company_name
       };
 
       const response = await fetch(url, {
@@ -103,11 +94,11 @@ export default function VendorsPage() {
         await fetchVendors();
       } else {
         const errorData = await response.json();
-        setError(errorData.message || "ベンダーの保存に失敗しました");
+        setError(errorData.message || "会社の保存に失敗しました");
       }
     } catch (err) {
       console.error('Error saving vendor:', err);
-      setError("ベンダーの保存中にエラーが発生しました");
+      setError("会社の保存中にエラーが発生しました");
     }
   };
 
@@ -119,24 +110,24 @@ export default function VendorsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (vendorId: number) => {
-    if (!confirm("このベンダーを削除してもよろしいですか？")) {
+  const handleDelete = async (companyId: number) => {
+    if (!confirm("この会社を削除してもよろしいですか？")) {
       return;
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/${vendorId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies/${companyId}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
         await fetchVendors();
       } else {
-        setError("ベンダーの削除に失敗しました");
+        setError("会社の削除に失敗しました");
       }
     } catch (err) {
       console.error('Error deleting vendor:', err);
-      setError("ベンダーの削除中にエラーが発生しました");
+      setError("会社の削除中にエラーが発生しました");
     }
   };
 
@@ -157,26 +148,26 @@ export default function VendorsPage() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">ベンダー管理</h1>
-            <p className="text-gray-600">ベンダー情報の登録・管理を行います</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">会社管理</h1>
+            <p className="text-gray-600">会社情報の登録・管理を行います</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
-                新規ベンダー登録
+                新規会社登録
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingVendor ? "ベンダー編集" : "新規ベンダー登録"}</DialogTitle>
+                <DialogTitle>{editingVendor ? "会社編集" : "新規会社登録"}</DialogTitle>
                 <DialogDescription>
-                  ベンダーの基本情報を入力してください
+                  会社の基本情報を入力してください
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="company_name">ベンダー名 <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="company_name">会社名 <span className="text-red-500">*</span></Label>
                   <Input
                     id="company_name"
                     value={formData.company_name}
@@ -205,8 +196,8 @@ export default function VendorsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl text-gray-900">ベンダー一覧</CardTitle>
-            <CardDescription>登録されているベンダーの一覧です</CardDescription>
+            <CardTitle className="text-xl text-gray-900">会社一覧</CardTitle>
+            <CardDescription>登録されている会社の一覧です</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -216,11 +207,11 @@ export default function VendorsPage() {
             ) : vendors.length === 0 ? (
               <div className="text-center py-8">
                 <Building className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">ベンダーが登録されていません</h3>
-                <p className="text-gray-600 mb-4">新規ベンダーを登録してください。</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">会社が登録されていません</h3>
+                <p className="text-gray-600 mb-4">新規会社を登録してください。</p>
                 <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="h-4 w-4 mr-2" />
-                  新規ベンダー登録
+                  新規会社登録
                 </Button>
               </div>
             ) : (
@@ -228,25 +219,17 @@ export default function VendorsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ベンダー名</TableHead>
-                      <TableHead>担当者名</TableHead>
-                      <TableHead>担当者部署</TableHead>
-                      <TableHead>担当者役職</TableHead>
-                      <TableHead>メールアドレス</TableHead>
+                      <TableHead>会社名</TableHead>
                       <TableHead>登録日</TableHead>
                       <TableHead>操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {vendors.map((vendor) => (
-                      <TableRow key={vendor.user_id}>
+                      <TableRow key={vendor.company_id}>
                         <TableCell className="font-medium">
-                          {vendor.company_name || "-"}
+                          {vendor.company_name}
                         </TableCell>
-                        <TableCell>{vendor.full_name}</TableCell>
-                        <TableCell>{vendor.department || "-"}</TableCell>
-                        <TableCell>{vendor.position || "-"}</TableCell>
-                        <TableCell>{vendor.email}</TableCell>
                         <TableCell>{new Date(vendor.created_at).toLocaleDateString("ja-JP")}</TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
@@ -260,7 +243,7 @@ export default function VendorsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDelete(vendor.user_id)}
+                              onClick={() => handleDelete(vendor.company_id)}
                               className="text-red-600 hover:text-red-800"
                             >
                               <Trash2 className="h-4 w-4" />

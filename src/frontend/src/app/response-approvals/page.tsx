@@ -144,7 +144,7 @@ export default function ResponseApprovalsPage() {
 
         <div className="mb-6">
           <Input
-            placeholder="見積番号、ベンダー名、件名で検索..."
+            placeholder="見積番号、会社名、件名で検索..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-md"
@@ -179,7 +179,7 @@ export default function ResponseApprovalsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>見積番号</TableHead>
-                      <TableHead>ベンダー名</TableHead>
+                      <TableHead>会社名</TableHead>
                       <TableHead>件名</TableHead>
                       <TableHead>見積金額</TableHead>
                       <TableHead>提出日</TableHead>

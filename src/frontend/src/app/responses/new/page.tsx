@@ -49,7 +49,7 @@ export default function NewResponsePage() {
   const [createdResponseId, setCreatedResponseId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     request_id: "",
-    vendor_id: "",
+    company_id: "",
     estimate_number: "",
     estimate_price: "",
     total_amount: "",
@@ -115,10 +115,10 @@ export default function NewResponsePage() {
           setVendors([]);
         }
       } else {
-        setError("ベンダー情報の取得に失敗しました");
+        setError("会社情報の取得に失敗しました");
       }
     } catch {
-      setError("ベンダー情報の取得中にエラーが発生しました");
+      setError("会社情報の取得中にエラーが発生しました");
     }
   };
 
@@ -267,7 +267,7 @@ export default function NewResponsePage() {
         body: JSON.stringify({
           ...formData,
           request_id: parseInt(formData.request_id),
-          vendor_id: formData.vendor_id ? parseInt(formData.vendor_id) : null,
+          company_id: formData.company_id ? parseInt(formData.company_id) : null,
           estimate_price: formData.estimate_price ? parseFloat(formData.estimate_price) : null,
           total_amount: formData.total_amount ? parseFloat(formData.total_amount) : null,
           created_by: 1,
@@ -334,8 +334,8 @@ export default function NewResponsePage() {
               </div>
 
               <div>
-                <Label htmlFor="vendor_id" className="text-sm font-medium text-gray-700">
-                  ベンダー
+                <Label htmlFor="company_id" className="text-sm font-medium text-gray-700">
+                  会社
                 </Label>
                 {selectedRequestVendor ? (
                   <div className="mt-1 p-3 bg-gray-50 rounded-md border">
@@ -343,13 +343,13 @@ export default function NewResponsePage() {
                       {selectedRequestVendor.company_name || selectedRequestVendor.full_name}
                     </p>
                     <p className="text-xs text-gray-600">
-                      見積依頼で指定されたベンダー
+                      見積依頼で指定された会社
                     </p>
                   </div>
                 ) : (
-                  <Select value={formData.vendor_id} onValueChange={(value) => handleInputChange("vendor_id", value)}>
+                  <Select value={formData.company_id} onValueChange={(value) => handleInputChange("company_id", value)}>
                     <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="ベンダーを選択してください" />
+                      <SelectValue placeholder="会社を選択してください" />
                     </SelectTrigger>
                     <SelectContent>
                       {vendors.map((vendor) => (

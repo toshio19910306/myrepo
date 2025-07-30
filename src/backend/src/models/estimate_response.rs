@@ -8,7 +8,7 @@ use rust_decimal::Decimal;
 pub struct EstimateResponse {
     pub response_id: i32,
     pub request_id: Option<i32>,
-    pub vendor_id: Option<i32>,
+    pub company_id: Option<i32>,
     pub estimate_number: Option<String>,
     pub estimate_price: Option<Decimal>,
     pub total_amount: Option<Decimal>,
@@ -27,7 +27,7 @@ pub struct EstimateResponse {
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateEstimateResponseRequest {
     pub request_id: i32,
-    pub vendor_id: Option<i32>,
+    pub company_id: Option<i32>,
     #[validate(length(max = 50))]
     pub estimate_number: Option<String>,
     pub estimate_price: Option<Decimal>,
@@ -45,7 +45,7 @@ pub struct CreateEstimateResponseRequest {
 #[derive(Debug, Deserialize, Validate)]
 pub struct UpdateEstimateResponseRequest {
     pub request_id: Option<i32>,
-    pub vendor_id: Option<i32>,
+    pub company_id: Option<i32>,
     #[validate(length(max = 50))]
     pub estimate_number: Option<String>,
     pub estimate_price: Option<Decimal>,
