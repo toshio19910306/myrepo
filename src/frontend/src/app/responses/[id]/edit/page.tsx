@@ -20,9 +20,12 @@ interface EstimateRequest {
   budget_range_max?: number;
 }
 
-interface User {
-  user_id: number;
-  full_name: string;
+interface Vendor {
+  company_id: number;
+  company_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface AttachedFile {
@@ -55,7 +58,7 @@ export default function EditResponsePage() {
 
   const [response, setResponse] = useState<EstimateResponse | null>(null);
   const [approvedRequests, setApprovedRequests] = useState<EstimateRequest[]>([]);
-  const [vendors, setVendors] = useState<User[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

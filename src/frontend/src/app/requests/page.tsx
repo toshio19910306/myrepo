@@ -70,6 +70,14 @@ interface User {
   is_active: boolean;
 }
 
+interface Vendor {
+  company_id: number;
+  company_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -92,7 +100,7 @@ export default function RequestsPage() {
   });
   const [specifications, setSpecifications] = useState<Specification[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [companies, setCompanies] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<Vendor[]>([]);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [selectedApprovers, setSelectedApprovers] = useState<number[]>([]);
   const [approvalRequestId, setApprovalRequestId] = useState<number | null>(null);
