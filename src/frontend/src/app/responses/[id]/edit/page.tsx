@@ -280,8 +280,8 @@ export default function EditResponsePage() {
                   </SelectTrigger>
                   <SelectContent>
                     {vendors.map((vendor) => (
-                      <SelectItem key={vendor.user_id} value={vendor.user_id.toString()}>
-                        {vendor.full_name}
+                      <SelectItem key={vendor.company_id} value={vendor.company_id.toString()}>
+                        {vendor.company_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
