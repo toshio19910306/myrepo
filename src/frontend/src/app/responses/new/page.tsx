@@ -17,6 +17,7 @@ interface EstimateRequest {
   deadline: string;
   budget_range_min?: number;
   budget_range_max?: number;
+  company_name?: string;
 }
 
 interface User {
@@ -371,29 +372,16 @@ export default function NewResponsePage() {
                 <Label htmlFor="company_id" className="text-sm font-medium text-gray-700">
                   会社
                 </Label>
-                {selectedRequestVendor ? (
-                  <div className="mt-1 p-3 bg-gray-50 rounded-md border">
-                    <p className="text-sm font-medium text-gray-900">
-                      {selectedRequestVendor.company_name || selectedRequestVendor.full_name}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      見積依頼で指定された会社
-                    </p>
-                  </div>
-                ) : (
-                  <Select value={formData.company_id} onValueChange={(value) => handleInputChange("company_id", value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="会社を選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vendors.map((vendor) => (
-                        <SelectItem key={vendor.user_id} value={vendor.user_id.toString()}>
-                          {vendor.company_name || vendor.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <div className="mt-1 p-3 bg-gray-50 rounded-md border">
+                  <p className="text-sm font-medium text-gray-900">
+                    {selectedRequestVendor?.company_name || selectedRequestVendor?.full_name || 
+                     approvedRequests.find(req => req.request_id.toString() === formData.request_id)?.company_name || 
+                     "会社情報が見つかりません"}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    承認済み見積依頼で登録された会社
+                  </p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

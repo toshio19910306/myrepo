@@ -18,15 +18,9 @@ interface EstimateRequest {
   deadline: string;
   budget_range_min?: number;
   budget_range_max?: number;
+  company_name?: string;
 }
 
-interface Vendor {
-  company_id: number;
-  company_name: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
 
 interface AttachedFile {
   file_id: string;
@@ -58,7 +52,6 @@ export default function EditResponsePage() {
 
   const [response, setResponse] = useState<EstimateResponse | null>(null);
   const [approvedRequests, setApprovedRequests] = useState<EstimateRequest[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -131,37 +124,8 @@ export default function EditResponsePage() {
       }
     };
 
-    const fetchCompanies = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved-with-companies`);
-        if (response.ok) {
-          const apiResponse = await response.json();
-          if (apiResponse.success && Array.isArray(apiResponse.data)) {
-            const uniqueCompanies = apiResponse.data
-              .filter((req: { company_id?: number; company_name?: string }) => req.company_id && req.company_name)
-              .reduce((acc: { company_id: number; company_name: string; is_active: boolean; created_at: string; updated_at: string }[], req: { company_id: number; company_name: string; created_at: string; updated_at: string }) => {
-                if (!acc.find(c => c.company_id === req.company_id)) {
-                  acc.push({
-                    company_id: req.company_id,
-                    company_name: req.company_name,
-                    is_active: true,
-                    created_at: req.created_at,
-                    updated_at: req.updated_at
-                  });
-                }
-                return acc;
-              }, []);
-            setVendors(uniqueCompanies);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching companies:', error);
-      }
-    };
-
     fetchResponse();
     fetchApprovedRequests();
-    fetchCompanies();
   }, [responseId]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -316,7 +280,7 @@ export default function EditResponsePage() {
                 </Label>
                 <div className="mt-1 p-3 bg-gray-50 rounded-md border">
                   <p className="text-sm font-medium text-gray-900">
-                    {response?.company_name || "会社情報が見つかりません"}
+                    {approvedRequests.find(req => req.request_id.toString() === formData.request_id)?.company_name || "会社情報が見つかりません"}
                   </p>
                   <p className="text-xs text-gray-600">
                     承認済み見積依頼で登録された会社
