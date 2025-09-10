@@ -54,6 +54,7 @@ export default function EditResponsePage() {
   const [response, setResponse] = useState<EstimateResponse | null>(null);
   const [approvedRequests, setApprovedRequests] = useState<EstimateRequest[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [filesToDelete, setFilesToDelete] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -188,6 +189,7 @@ export default function EditResponsePage() {
 
   const removeFile = (fileId: string) => {
     setAttachedFiles(prev => prev.filter(file => file.file_id !== fileId));
+    setFilesToDelete(prev => [...prev, fileId]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -196,6 +198,16 @@ export default function EditResponsePage() {
     setError(null);
 
     try {
+      for (const fileId of filesToDelete) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/${fileId}`, {
+            method: "DELETE",
+          });
+        } catch (error) {
+          console.error(`Failed to delete file ${fileId}:`, error);
+        }
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}`, {
         method: "PUT",
         headers: {
@@ -282,9 +294,6 @@ export default function EditResponsePage() {
                 <div className="mt-1 p-3 bg-gray-50 rounded-md border">
                   <p className="text-sm font-medium text-gray-900">
                     {approvedRequests.find(req => req.request_id.toString() === formData.request_id)?.company_name || "会社情報が見つかりません"}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    承認済み見積依頼で登録された会社
                   </p>
                 </div>
               </div>

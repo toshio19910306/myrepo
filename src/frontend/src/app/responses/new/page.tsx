@@ -383,9 +383,6 @@ export default function NewResponsePage() {
                      approvedRequests.find(req => req.request_id.toString() === formData.request_id)?.company_name || 
                      "会社情報が見つかりません"}
                   </p>
-                  <p className="text-xs text-gray-600">
-                    承認済み見積依頼で登録された会社
-                  </p>
                 </div>
               </div>
 
