@@ -17,6 +17,7 @@ interface EstimateRequest {
   deadline: string;
   budget_range_min?: number;
   budget_range_max?: number;
+  company_id?: number;
   company_name?: string;
 }
 
