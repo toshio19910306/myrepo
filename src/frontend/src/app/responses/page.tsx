@@ -53,7 +53,7 @@ export default function ResponsesPage() {
   const fetchResponses = async () => {
     try {
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -76,7 +76,7 @@ export default function ResponsesPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/approvers`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/users/approvers`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -102,7 +102,7 @@ export default function ResponsesPage() {
     setApprovalError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${approvalResponseId}/submit-for-approval`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses/${approvalResponseId}/submit-for-approval`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

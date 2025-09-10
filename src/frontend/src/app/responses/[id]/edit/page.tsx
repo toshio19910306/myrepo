@@ -73,7 +73,7 @@ export default function EditResponsePage() {
   useEffect(() => {
     const fetchResponse = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses/${responseId}`);
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.data) {
@@ -93,7 +93,7 @@ export default function EditResponsePage() {
             });
             
             try {
-              const filesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/target/RESPONSE/${responseId}`);
+              const filesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/target/RESPONSE/${responseId}`);
               if (filesResponse.ok) {
                 const filesData = await filesResponse.json();
                 setAttachedFiles(filesData.data || []);
@@ -114,7 +114,7 @@ export default function EditResponsePage() {
 
     const fetchApprovedRequests = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved-with-companies`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests/approved-with-companies`);
         if (response.ok) {
           const data = await response.json();
           if (data.success && Array.isArray(data.data)) {
@@ -145,7 +145,7 @@ export default function EditResponsePage() {
       formData.append("target_id", responseId);
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/upload`, {
           method: "POST",
           body: formData,
         });
@@ -200,7 +200,7 @@ export default function EditResponsePage() {
     try {
       for (const fileId of filesToDelete) {
         try {
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/${fileId}`, {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/${fileId}`, {
             method: "DELETE",
           });
         } catch (error) {
@@ -208,7 +208,7 @@ export default function EditResponsePage() {
         }
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses/${responseId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

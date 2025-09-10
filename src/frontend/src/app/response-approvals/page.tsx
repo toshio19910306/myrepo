@@ -32,7 +32,7 @@ export default function ResponseApprovalsPage() {
   const fetchResponseApprovals = useCallback(async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
       const response = await fetch(`${apiUrl}/api/responses/pending-approvals`);
       if (response.ok) {
         const apiResponse = await response.json();
@@ -56,7 +56,7 @@ export default function ResponseApprovalsPage() {
 
   const handleApprove = async (responseId: number) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}/approve`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses/${responseId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export default function ResponseApprovalsPage() {
 
   const handleReject = async (responseId: number) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${responseId}/reject`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses/${responseId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

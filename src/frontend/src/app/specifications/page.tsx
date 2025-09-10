@@ -122,7 +122,7 @@ export default function SpecificationsPage() {
   const fetchSpecifications = async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
       const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
       
       const headers: HeadersInit = {
@@ -181,7 +181,7 @@ export default function SpecificationsPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
       const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
       
       const headers: HeadersInit = {
@@ -307,7 +307,7 @@ export default function SpecificationsPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
       const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
       
       const headers: HeadersInit = {
@@ -378,7 +378,7 @@ export default function SpecificationsPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
       const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
       
       const headers: HeadersInit = {

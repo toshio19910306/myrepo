@@ -90,7 +90,7 @@ export default function NewResponsePage() {
 
   const fetchApprovedRequests = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved-with-companies`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests/approved-with-companies`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -108,7 +108,7 @@ export default function NewResponsePage() {
 
   const fetchVendors = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved-with-companies`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests/approved-with-companies`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -138,7 +138,7 @@ export default function NewResponsePage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/users`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -170,7 +170,7 @@ export default function NewResponsePage() {
 
   const fetchRequestVendor = async (requestId: number) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${requestId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests/${requestId}`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && apiResponse.data.vendor_name) {
@@ -194,7 +194,7 @@ export default function NewResponsePage() {
       formData.append("target_id", "0");
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/upload`, {
           method: "POST",
           body: formData,
         });
@@ -259,7 +259,7 @@ export default function NewResponsePage() {
     setApprovalError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${createdResponseId}/request-approval`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses/${createdResponseId}/request-approval`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -299,7 +299,7 @@ export default function NewResponsePage() {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

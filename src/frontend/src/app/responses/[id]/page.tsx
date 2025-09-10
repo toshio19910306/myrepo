@@ -48,14 +48,14 @@ export default function ResponseDetailPage() {
   const fetchResponseDetail = useCallback(async () => {
     try {
       setError(null);
-      const apiResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/responses/${id}`);
+      const apiResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/responses/${id}`);
       if (apiResponse.ok) {
         const result = await apiResponse.json();
         if (result.success && result.data) {
           setResponse(result.data);
           
           try {
-            const filesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/target/RESPONSE/${id}`);
+            const filesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/target/RESPONSE/${id}`);
             if (filesResponse.ok) {
               const filesData = await filesResponse.json();
               setAttachedFiles(filesData.data || []);
@@ -85,7 +85,7 @@ export default function ResponseDetailPage() {
 
   const handleDownloadFile = async (file: AttachedFile) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/download/${file.file_id}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/download/${file.file_id}`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);

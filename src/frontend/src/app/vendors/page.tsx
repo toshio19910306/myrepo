@@ -39,7 +39,7 @@ export default function VendorsPage() {
   const fetchVendors = async () => {
     try {
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/companies`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -71,8 +71,8 @@ export default function VendorsPage() {
 
     try {
       const url = editingVendor 
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies/${editingVendor.company_id}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/companies/${editingVendor.company_id}`
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/companies`;
       
       const method = editingVendor ? "PUT" : "POST";
       const payload = {
@@ -116,7 +116,7 @@ export default function VendorsPage() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies/${companyId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/companies/${companyId}`, {
         method: "DELETE",
       });
 

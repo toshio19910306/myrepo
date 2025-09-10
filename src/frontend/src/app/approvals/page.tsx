@@ -40,7 +40,7 @@ export default function ApprovalsPage() {
   const fetchApprovals = useCallback(async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
       const currentUserParam = currentUser ? `?current_user_id=${currentUser.id}` : '?current_user_id=1';
       const response = await fetch(`${apiUrl}/api/approvals${currentUserParam}`);
       if (response.ok) {
@@ -104,7 +104,7 @@ export default function ApprovalsPage() {
 
   const handleApprove = async (approvalId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/approvals/${approvalId}/approve`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/approvals/${approvalId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export default function ApprovalsPage() {
 
   const handleReject = async (approvalId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/approvals/${approvalId}/reject`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/approvals/${approvalId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

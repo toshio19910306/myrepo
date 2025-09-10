@@ -118,7 +118,7 @@ export default function RequestsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests`);
       if (!response.ok) {
         throw new Error(`Failed to fetch requests: ${response.status} ${response.statusText}`);
       }
@@ -140,7 +140,7 @@ export default function RequestsPage() {
 
   const fetchSpecifications = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/specifications`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/specifications`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -206,7 +206,7 @@ export default function RequestsPage() {
           formData.append('file', file);
         });
 
-        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
+        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/upload`, {
           method: 'POST',
           body: formData,
         });
@@ -266,7 +266,7 @@ export default function RequestsPage() {
       
       console.log('Final request data being sent:', requestData);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -330,7 +330,7 @@ export default function RequestsPage() {
   const handleEditRequest = async (request: EstimateRequest) => {
     try {
       console.log('Fetching request data for ID:', request.request_id);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${request.request_id}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests/${request.request_id}`);
       if (response.ok) {
         const data = await response.json();
         console.log('Request data received:', data);
@@ -342,7 +342,7 @@ export default function RequestsPage() {
         });
         
         console.log('Fetching files for request ID:', request.request_id);
-        const filesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/target/REQUEST/${request.request_id}`);
+        const filesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/target/REQUEST/${request.request_id}`);
         console.log('Files response status:', filesResponse.status);
         if (filesResponse.ok) {
           const filesData = await filesResponse.json();
@@ -390,7 +390,7 @@ export default function RequestsPage() {
           console.log('FormData prepared for file:', file.name);
           console.log('Target ID:', editingRequest.request_id.toString());
           
-          const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/upload`, {
+          const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/upload`, {
             method: 'POST',
             body: formData,
           });
@@ -419,7 +419,7 @@ export default function RequestsPage() {
         company_id: editingRequest.company_id ? parseInt(editingRequest.company_id) : null
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${editingRequest.request_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests/${editingRequest.request_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -461,7 +461,7 @@ export default function RequestsPage() {
 
   const handleConfirmDelete = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${deletingRequestId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests/${deletingRequestId}`, {
         method: 'DELETE',
       });
 
@@ -501,7 +501,7 @@ export default function RequestsPage() {
 
   const handleDeleteExistingFile = async (fileId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/${fileId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/${fileId}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -517,7 +517,7 @@ export default function RequestsPage() {
 
   const handleDownloadFile = async (file: AttachedFile) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/files/download/${file.file_id}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/files/download/${file.file_id}`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -541,7 +541,7 @@ export default function RequestsPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/approvers`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/users/approvers`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -555,7 +555,7 @@ export default function RequestsPage() {
 
   const fetchCompanies = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/companies`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -581,7 +581,7 @@ export default function RequestsPage() {
     setApprovalError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/${approvalRequestId}/submit-for-approval`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/requests/${approvalRequestId}/submit-for-approval`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
