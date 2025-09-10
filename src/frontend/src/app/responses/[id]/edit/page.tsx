@@ -185,8 +185,16 @@ export default function EditResponsePage() {
         });
 
         if (response.ok) {
-          const uploadedFile = await response.json();
-          setAttachedFiles(prev => [...prev, uploadedFile]);
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data) {
+            setAttachedFiles(prev => [...prev, {
+              file_id: apiResponse.data.file_id,
+              filename: apiResponse.data.filename,
+              size: apiResponse.data.size,
+              content_type: apiResponse.data.content_type,
+              url: apiResponse.data.url
+            }]);
+          }
         } else {
           setError("ファイルのアップロードに失敗しました");
         }
@@ -306,18 +314,14 @@ export default function EditResponsePage() {
                 <Label htmlFor="vendor_id" className="text-sm font-medium text-gray-700">
                   会社
                 </Label>
-                <Select value={formData.vendor_id} onValueChange={(value) => handleInputChange("vendor_id", value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="会社を選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vendors.map((vendor) => (
-                      <SelectItem key={vendor.company_id} value={vendor.company_id.toString()}>
-                        {vendor.company_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="mt-1 p-3 bg-gray-50 rounded-md border">
+                  <p className="text-sm font-medium text-gray-900">
+                    {response?.company_name || "会社情報が見つかりません"}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    承認済み見積依頼で登録された会社
+                  </p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -509,7 +513,7 @@ export default function EditResponsePage() {
                           <FileText className="h-5 w-5 text-gray-400" />
                           <div>
                             <p className="text-sm font-medium text-gray-900">{file.filename}</p>
-                            <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                            <p className="text-xs text-gray-500">{file.size ? (file.size / 1024).toFixed(1) : '0'} KB</p>
                           </div>
                         </div>
                         <Button

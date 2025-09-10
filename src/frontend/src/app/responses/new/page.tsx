@@ -194,8 +194,16 @@ export default function NewResponsePage() {
         });
 
         if (response.ok) {
-          const uploadedFile = await response.json();
-          setAttachedFiles(prev => [...prev, uploadedFile]);
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data) {
+            setAttachedFiles(prev => [...prev, {
+              file_id: apiResponse.data.file_id,
+              filename: apiResponse.data.filename,
+              size: apiResponse.data.size,
+              content_type: apiResponse.data.content_type,
+              url: apiResponse.data.url
+            }]);
+          }
         } else {
           setError("ファイルのアップロードに失敗しました");
         }
@@ -577,7 +585,7 @@ export default function NewResponsePage() {
                           <FileText className="h-5 w-5 text-gray-400" />
                           <div>
                             <p className="text-sm font-medium text-gray-900">{file.filename}</p>
-                            <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                            <p className="text-xs text-gray-500">{file.size ? (file.size / 1024).toFixed(1) : '0'} KB</p>
                           </div>
                         </div>
                         <Button
