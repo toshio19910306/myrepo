@@ -133,15 +133,29 @@ export default function EditResponsePage() {
 
     const fetchCompanies = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/companies`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved-with-companies`);
         if (response.ok) {
-          const data = await response.json();
-          if (data.success && Array.isArray(data.data)) {
-            setVendors(data.data);
+          const apiResponse = await response.json();
+          if (apiResponse.success && Array.isArray(apiResponse.data)) {
+            const uniqueCompanies = apiResponse.data
+              .filter((req: { company_id?: number; company_name?: string }) => req.company_id && req.company_name)
+              .reduce((acc: { company_id: number; company_name: string; is_active: boolean; created_at: string; updated_at: string }[], req: { company_id: number; company_name: string; created_at: string; updated_at: string }) => {
+                if (!acc.find(c => c.company_id === req.company_id)) {
+                  acc.push({
+                    company_id: req.company_id,
+                    company_name: req.company_name,
+                    is_active: true,
+                    created_at: req.created_at,
+                    updated_at: req.updated_at
+                  });
+                }
+                return acc;
+              }, []);
+            setVendors(uniqueCompanies);
           }
         }
-      } catch {
-        console.error("会社情報の取得に失敗しました");
+      } catch (error) {
+        console.error('Error fetching companies:', error);
       }
     };
 
@@ -157,11 +171,8 @@ export default function EditResponsePage() {
     }));
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    for (const file of Array.from(files)) {
+  const handleFileUploadFromFiles = async (files: File[]) => {
+    for (const file of files) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("target_type", "RESPONSE");
@@ -185,6 +196,23 @@ export default function EditResponsePage() {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+    
+    handleFileUploadFromFiles(Array.from(files));
+  };
+
+  const handleFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files);
+    handleFileUploadFromFiles(files);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
   const removeFile = (fileId: string) => {
     setAttachedFiles(prev => prev.filter(file => file.file_id !== fileId));
   };
@@ -206,6 +234,7 @@ export default function EditResponsePage() {
           vendor_id: formData.vendor_id ? parseInt(formData.vendor_id) : null,
           estimate_price: formData.estimate_price ? parseFloat(formData.estimate_price) : null,
           total_amount: formData.total_amount ? parseFloat(formData.total_amount) : null,
+          attachment_ids: attachedFiles.map(file => file.file_id).filter(id => id != null),
         }),
       });
 
@@ -446,7 +475,7 @@ export default function EditResponsePage() {
                   <Label htmlFor="file-upload" className="text-sm font-medium text-gray-700">
                     ファイルを選択
                   </Label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors" onDrop={handleFileDrop} onDragOver={handleDragOver}>
                     <div className="space-y-1 text-center">
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
                       <div className="flex text-sm text-gray-600">

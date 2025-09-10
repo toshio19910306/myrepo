@@ -35,3 +35,7 @@ pub async fn copy_request(pool: &PgPool, request_id: i32, created_by: i32) -> Re
 pub async fn get_approved_requests(pool: &PgPool) -> Result<Vec<EstimateRequest>> {
     estimate_request_service_impl::get_approved_requests(pool).await
 }
+
+pub async fn get_approved_requests_with_companies(pool: &PgPool) -> Result<Vec<serde_json::Value>> {
+    estimate_request_service_impl::get_approved_requests_with_companies(pool).await
+}

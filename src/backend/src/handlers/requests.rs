@@ -19,6 +19,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(get_requests).post(create_request))
         .route("/approved", get(get_approved_requests))
+        .route("/approved-with-companies", get(get_approved_requests_with_companies))
         .route("/:id", get(get_request).put(update_request).delete(delete_request))
         .route("/:id/submit", post(submit_request))
         .route("/:id/submit-for-approval", post(submit_request_for_approval))
@@ -571,4 +572,30 @@ async fn submit_request_for_approval(
         message: "承認申請を送信しました".to_string(),
         timestamp: chrono::Utc::now().to_rfc3339(),
     }))
+}
+
+async fn get_approved_requests_with_companies(
+    State(state): State<AppState>,
+) -> Result<Json<ApiResponse<Vec<serde_json::Value>>>, (StatusCode, Json<ErrorResponse>)> {
+    match estimate_request_service::get_approved_requests_with_companies(&state.db_pool).await {
+        Ok(request_data) => {
+            Ok(Json(ApiResponse {
+                success: true,
+                data: Some(request_data),
+                message: "承認済み見積依頼一覧（会社名付き）を取得しました".to_string(),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }))
+        },
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                success: false,
+                error: json!({
+                    "code": "INTERNAL_ERROR",
+                    "message": e.to_string()
+                }),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            }),
+        )),
+    }
 }

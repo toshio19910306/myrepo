@@ -190,3 +190,40 @@ pub async fn copy_request(pool: &PgPool, request_id: i32, created_by: i32) -> Re
 pub async fn get_approved_requests_for_vendor(pool: &PgPool) -> Result<Vec<EstimateRequest>> {
     get_approved_requests(pool).await
 }
+
+pub async fn get_approved_requests_with_companies(pool: &PgPool) -> Result<Vec<serde_json::Value>> {
+    let requests = sqlx::query(
+        "SELECT er.request_id, er.spec_id, er.subject, er.description, er.deadline, 
+                er.budget_range_min, er.budget_range_max, er.requirements, er.company_id, 
+                er.status, er.created_by, er.created_at, er.updated_at,
+                c.company_name
+         FROM estimate_requests er
+         LEFT JOIN companies c ON er.company_id = c.company_id
+         WHERE er.status IN ('RESPONDED', 'SUBMITTED')
+         ORDER BY er.created_at DESC"
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let request_data: Vec<serde_json::Value> = requests
+        .into_iter()
+        .map(|row| serde_json::json!({
+            "request_id": row.get::<i32, _>("request_id"),
+            "spec_id": row.get::<Option<i32>, _>("spec_id"),
+            "subject": row.get::<String, _>("subject"),
+            "description": row.get::<Option<String>, _>("description"),
+            "deadline": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("deadline"),
+            "budget_range_min": row.get::<Option<rust_decimal::Decimal>, _>("budget_range_min"),
+            "budget_range_max": row.get::<Option<rust_decimal::Decimal>, _>("budget_range_max"),
+            "requirements": row.get::<Option<String>, _>("requirements"),
+            "company_id": row.get::<Option<i32>, _>("company_id"),
+            "company_name": row.get::<Option<String>, _>("company_name"),
+            "status": row.get::<String, _>("status"),
+            "created_by": row.get::<Option<i32>, _>("created_by"),
+            "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+            "updated_at": row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at")
+        }))
+        .collect();
+
+    Ok(request_data)
+}

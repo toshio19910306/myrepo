@@ -106,19 +106,31 @@ export default function NewResponsePage() {
 
   const fetchVendors = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users?user_type=VENDOR`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved-with-companies`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
-          setVendors(apiResponse.data);
-        } else {
-          setVendors([]);
+          const uniqueCompanies = apiResponse.data
+            .filter((req: { company_id?: number; company_name?: string }) => req.company_id && req.company_name)
+            .reduce((acc: { user_id: number; company_id: number; company_name: string; full_name: string; is_active: boolean; created_at: string; updated_at: string }[], req: { company_id: number; company_name: string; created_at: string; updated_at: string }) => {
+              if (!acc.find(c => c.company_id === req.company_id)) {
+                acc.push({
+                  user_id: req.company_id,
+                  company_id: req.company_id,
+                  company_name: req.company_name,
+                  full_name: req.company_name,
+                  is_active: true,
+                  created_at: req.created_at,
+                  updated_at: req.updated_at
+                });
+              }
+              return acc;
+            }, []);
+          setVendors(uniqueCompanies);
         }
-      } else {
-        setError("会社情報の取得に失敗しました");
       }
-    } catch {
-      setError("会社情報の取得中にエラーが発生しました");
+    } catch (error) {
+      console.error('Error fetching companies:', error);
     }
   };
 
@@ -168,11 +180,8 @@ export default function NewResponsePage() {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    for (const file of Array.from(files)) {
+  const handleFileUploadFromFiles = async (files: File[]) => {
+    for (const file of files) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("target_type", "RESPONSE");
@@ -194,6 +203,23 @@ export default function NewResponsePage() {
         setError("ファイルのアップロード中にエラーが発生しました");
       }
     }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+    
+    handleFileUploadFromFiles(Array.from(files));
+  };
+
+  const handleFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files);
+    handleFileUploadFromFiles(files);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
   };
 
   const removeFile = (fileId: string) => {
@@ -517,7 +543,7 @@ export default function NewResponsePage() {
                   <Label htmlFor="file-upload" className="text-sm font-medium text-gray-700">
                     ファイルを選択
                   </Label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors" onDrop={handleFileDrop} onDragOver={handleDragOver}>
                     <div className="space-y-1 text-center">
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
                       <div className="flex text-sm text-gray-600">
