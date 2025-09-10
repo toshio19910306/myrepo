@@ -199,7 +199,7 @@ export default function NewResponsePage() {
             setAttachedFiles(prev => [...prev, {
               file_id: apiResponse.data.file_id,
               filename: apiResponse.data.filename,
-              size: apiResponse.data.size,
+              size: Number(apiResponse.data.size) || 0,
               content_type: apiResponse.data.content_type,
               url: apiResponse.data.url
             }]);
