@@ -57,4 +57,5 @@ pub struct UpdateEstimateResponseRequest {
     pub response_remarks: Option<String>,
     pub response_date: Option<String>,
     pub status: Option<String>,
+    pub attachment_ids: Option<Vec<String>>,
 }

@@ -89,7 +89,7 @@ export default function NewResponsePage() {
 
   const fetchApprovedRequests = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved-with-companies`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && Array.isArray(apiResponse.data)) {
@@ -158,6 +158,10 @@ export default function NewResponsePage() {
     if (field === "request_id" && value) {
       const selectedRequest = approvedRequests.find(req => req.request_id.toString() === value);
       if (selectedRequest) {
+        setFormData(prev => ({
+          ...prev,
+          company_id: selectedRequest.company_id?.toString() || ""
+        }));
         fetchRequestVendor(selectedRequest.request_id);
       }
     }

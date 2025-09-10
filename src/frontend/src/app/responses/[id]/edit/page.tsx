@@ -112,7 +112,7 @@ export default function EditResponsePage() {
 
     const fetchApprovedRequests = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/requests/approved-with-companies`);
         if (response.ok) {
           const data = await response.json();
           if (data.success && Array.isArray(data.data)) {
