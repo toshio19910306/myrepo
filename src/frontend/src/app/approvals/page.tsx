@@ -40,9 +40,8 @@ export default function ApprovalsPage() {
   const fetchApprovals = useCallback(async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
       const currentUserParam = currentUser ? `?current_user_id=${currentUser.id}` : '?current_user_id=1';
-      const response = await fetch(`${apiUrl}/api/approvals${currentUserParam}`);
+      const response = await fetch(`/api/approvals${currentUserParam}`);
       if (response.ok) {
         const apiResponse = await response.json();
         if (apiResponse.success && apiResponse.data?.approvals) {
@@ -68,7 +67,7 @@ export default function ApprovalsPage() {
     if (selectedApprovals.length === 0) return;
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/approvals/bulk-approve`, {
+      const response = await fetch('/api/approvals/bulk-approve', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +103,7 @@ export default function ApprovalsPage() {
 
   const handleApprove = async (approvalId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/approvals/${approvalId}/approve`, {
+      const response = await fetch(`/api/approvals/${approvalId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +134,7 @@ export default function ApprovalsPage() {
 
   const handleReject = async (approvalId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000'}/api/approvals/${approvalId}/reject`, {
+      const response = await fetch(`/api/approvals/${approvalId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

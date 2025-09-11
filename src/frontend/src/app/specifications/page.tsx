@@ -122,21 +122,7 @@ export default function SpecificationsPage() {
   const fetchSpecifications = async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
-      const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (apiAuth) {
-        headers['Authorization'] = `Basic ${btoa(apiAuth)}`;
-      }
-      
-      const response = await fetch(`${apiUrl}/api/specifications`, {
-        headers,
-        credentials: 'include'
-      });
+      const response = await fetch('/api/specifications');
       if (!response.ok) {
         throw new Error('Failed to fetch specifications');
       }
@@ -181,21 +167,11 @@ export default function SpecificationsPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
-      const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (apiAuth) {
-        headers['Authorization'] = `Basic ${btoa(apiAuth)}`;
-      }
-      
-      const response = await fetch(`${apiUrl}/api/specifications`, {
+      const response = await fetch('/api/specifications', {
         method: 'POST',
-        headers,
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           spec_number: `SPEC-${Date.now()}`,
           title: newSpec.title,
@@ -307,21 +283,11 @@ export default function SpecificationsPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
-      const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (apiAuth) {
-        headers['Authorization'] = `Basic ${btoa(apiAuth)}`;
-      }
-      
-      const response = await fetch(`${apiUrl}/api/specifications/${specId}`, {
+      const response = await fetch(`/api/specifications/${specId}`, {
         method: 'DELETE',
-        headers,
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -378,21 +344,11 @@ export default function SpecificationsPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
-      const apiAuth = process.env.NEXT_PUBLIC_API_AUTH;
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (apiAuth) {
-        headers['Authorization'] = `Basic ${btoa(apiAuth)}`;
-      }
-
-      const response = await fetch(`${apiUrl}/api/specifications/${editingSpec.spec_id}`, {
+      const response = await fetch(`/api/specifications/${editingSpec.spec_id}`, {
         method: 'PUT',
-        headers,
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           title: editSpec.title,
           work_items: editSpec.workItems,
