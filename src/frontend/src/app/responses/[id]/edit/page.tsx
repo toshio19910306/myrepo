@@ -138,7 +138,29 @@ export default function EditResponsePage() {
   };
 
   const handleFileUploadFromFiles = async (files: File[]) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain',
+      'text/csv'
+    ];
+
     for (const file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        setError(`ファイル形式が対応していません: ${file.name}. 対応形式: PDF, Word, Excel, PowerPoint, CSV, TXT`);
+        continue;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        setError(`ファイルサイズが大きすぎます: ${file.name}. 最大10MBまで対応しています。`);
+        continue;
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("target_type", "RESPONSE");
@@ -468,12 +490,13 @@ export default function EditResponsePage() {
                             type="file"
                             className="sr-only"
                             multiple
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt"
                             onChange={handleFileUpload}
                           />
                         </label>
                         <p className="pl-1">またはドラッグ&amp;ドロップ</p>
                       </div>
-                      <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
+                      <p className="text-xs text-gray-500">PDF, Word, Excel, PowerPoint, CSV, TXT up to 10MB</p>
                     </div>
                   </div>
                 </div>
