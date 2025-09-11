@@ -210,12 +210,7 @@ async fn get_approvers(
         Ok(users) => {
             let user_data: Vec<serde_json::Value> = users
                 .into_iter()
-                .filter(|u| {
-                    let valid_position = u.position.as_ref().map_or(false, |pos| 
-                        pos.contains("部長") || pos.contains("課長") || pos.contains("係長")
-                    );
-                    valid_position && u.is_active
-                })
+                .filter(|u| u.is_active)
                 .map(|u| serde_json::json!({
                     "user_id": u.user_id,
                     "username": u.username,
